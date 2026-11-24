@@ -1,0 +1,132 @@
+table dProduto
+	lineageTag: f726eb56-85fd-4573-a282-2ef208bc6027
+
+	/// Identificador do produto.
+	column ProdutoID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 5e9f48fb-2237-484f-9835-27be2a1e6f5e
+		summarizeBy: none
+		sourceColumn: ProdutoID
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Código interno do produto (6 dígitos, os 2 primeiros indicam a categoria).
+	column SKU
+		dataType: int64
+		formatString: 0
+		lineageTag: 726b9a19-3947-4abb-aeaf-b1259175dfdf
+		summarizeBy: none
+		sourceColumn: SKU
+
+		annotation SummarizationSetBy = User
+
+	/// Descrição completa do produto.
+	column Produto
+		dataType: string
+		lineageTag: 7d381d8b-c8bb-4160-8179-cce390c23b4d
+		summarizeBy: none
+		sourceColumn: Produto
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Marca do fabricante. "Vale Verde" é a marca própria.
+	column Marca
+		dataType: string
+		lineageTag: f8e3e742-7634-4af8-b914-1902f2088704
+		summarizeBy: none
+		sourceColumn: Marca
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Departamento do produto (Mercearia, Bebidas, Açougue...).
+	column Categoria
+		dataType: string
+		lineageTag: cc456bc8-8807-4b50-89bd-5503ed31ea38
+		summarizeBy: none
+		sourceColumn: Categoria
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Como chega à loja: CD (via centro de distribuição) ou DIRETO (fornecedor regional entrega na loja).
+	column Canal
+		dataType: string
+		lineageTag: ac048f36-c034-48c5-83a4-94974ef696f8
+		summarizeBy: none
+		sourceColumn: Canal
+
+		annotation SummarizationSetBy = Automatic
+
+	/// 1 para açougue, hortifrúti, padaria e frios.
+	column Perecivel
+		dataType: int64
+		formatString: 0
+		lineageTag: 62065db6-3e77-4d3e-9fac-674d4f4dd4e6
+		summarizeBy: none
+		sourceColumn: Perecivel
+
+		annotation SummarizationSetBy = User
+
+	/// 1 se o item é vendido ao cliente; 0 para itens de uso interno (sacolas, bobinas, limpeza).
+	column Revenda
+		dataType: int64
+		formatString: 0
+		lineageTag: c7bdc7b6-49b8-4460-9806-5ffc03d69e74
+		summarizeBy: none
+		sourceColumn: Revenda
+
+		annotation SummarizationSetBy = User
+
+	/// Unidade de venda: UN, KG, PCT ou CX.
+	column Medida
+		dataType: string
+		lineageTag: b226e01a-e6a3-4ce0-a447-113d1fa825a0
+		summarizeBy: none
+		sourceColumn: Medida
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Prazo de validade típico, em dias.
+	column ValidadeDias
+		dataType: int64
+		formatString: 0
+		lineageTag: 0f0afec6-8645-4e27-a46f-c04b920a23e3
+		summarizeBy: sum
+		sourceColumn: ValidadeDias
+
+		annotation SummarizationSetBy = User
+
+	/// Época de pico de venda: NATAL, PASCOA, QUARESMA, INVERNO, VERAO, PANETONE, FDS. Vazio se não tem.
+	column Sazonalidade
+		dataType: string
+		lineageTag: b2f80c80-32b9-4cb8-9f7b-3a538b92e489
+		summarizeBy: none
+		sourceColumn: Sazonalidade
+
+		annotation SummarizationSetBy = Automatic
+
+	/// 1 se for produto da marca própria Vale Verde.
+	column MarcaPropria
+		dataType: int64
+		formatString: 0
+		lineageTag: add3d8d9-19b8-4960-be21-a74dcf3acf2f
+		summarizeBy: none
+		sourceColumn: MarcaPropria
+
+		annotation SummarizationSetBy = User
+
+	partition dProduto = m
+		mode: import
+		source =
+				let
+				  Origem = Csv.Document(File.Contents("C:\Users\macor\OneDrive\Documentos\Vale Verde\mercado_vale_verde\powerbi\dados\dProduto.csv"), [Delimiter = ";", Columns = 12, Encoding = 65001, QuoteStyle = QuoteStyle.None]),
+				  #"Cabeçalhos promovidos" = Table.PromoteHeaders(Origem, [PromoteAllScalars = true]),
+				  #"Tipo de coluna alterado" = Table.TransformColumnTypes(#"Cabeçalhos promovidos", {{"ProdutoID", Int64.Type}, {"SKU", Int64.Type}, {"Produto", type text}, {"Marca", type text}, {"Categoria", type text}, {"Canal", type text}, {"Perecivel", Int64.Type}, {"Revenda", Int64.Type}, {"Medida", type text}, {"ValidadeDias", Int64.Type}, {"Sazonalidade", type text}, {"MarcaPropria", Int64.Type}})
+				in
+				  #"Tipo de coluna alterado"
+
+	annotation PBI_ResultType = Table
+

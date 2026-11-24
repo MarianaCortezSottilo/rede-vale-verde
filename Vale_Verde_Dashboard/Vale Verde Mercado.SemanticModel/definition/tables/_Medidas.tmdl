@@ -1,0 +1,904 @@
+table _Medidas
+	lineageTag: e2926590-4ece-4009-af55-cff648e99bc8
+
+	measure Faturamento = SUM ( fCupons[Receita] )
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Vendas
+		lineageTag: 06e0312f-19f4-406a-8686-7c45b158c341
+
+	measure Cupons = ```
+			SUM ( fCupons[Cupons] )
+			
+			```
+		formatString: #,0
+		displayFolder: Vendas
+		lineageTag: 6fd2fb2c-7023-4173-9966-6da0d3dd3145
+
+	measure 'Ticket Médio' = ```
+			DIVIDE ( [Faturamento], [Cupons] )
+			
+			```
+		formatString: \R$ #,0.00;-\R$ #,0.00;\R$ #,0.00
+		displayFolder: Vendas
+		lineageTag: 0e01b0ce-b7cb-4aba-a1bb-091ea9ff91ed
+
+	measure 'Itens por Cupom' = ```
+			DIVIDE ( SUM ( fCupons[Itens] ), [Cupons] )
+			
+			```
+		formatString: #,0.0
+		displayFolder: Vendas
+		lineageTag: 2166e5d0-49d1-40d3-a41e-0094f4552e44
+
+	measure CMV = ```
+			SUM ( fCupons[CMV] )
+			
+			```
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Vendas
+		lineageTag: 8ecbe678-ec91-4034-96e4-27f5bb5509a1
+
+	measure 'Lucro Bruto' = ```
+			[Faturamento] - [CMV]
+			
+			```
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Vendas
+		lineageTag: 46163847-e891-47ef-b498-4c94b2600b9c
+
+	measure 'Margem Bruta %' = ```
+			DIVIDE ( [Lucro Bruto], [Faturamento] )
+			
+			```
+		formatString: 0.0%;-0.0%;0.0%
+		displayFolder: Vendas
+		lineageTag: b5c0ef86-b6e9-447f-ab32-eb076a0ed96f
+
+	measure '% Cupons Fidelidade' = ```
+			DIVIDE ( SUM ( fCupons[CuponsFidelidade] ), [Cupons] )
+			
+			```
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: Vendas
+		lineageTag: 6fc484c3-13b0-4e32-91af-d4a064cf54f6
+
+	measure 'Faturamento Produto' = ```
+			SUM ( fVendas[Receita] )
+			
+			```
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Vendas
+		lineageTag: a18bcaa1-d991-4f87-8b2f-e7008d643d03
+
+	measure 'Quantidade Vendida' = ```
+			SUM ( fVendas[Quantidade] )
+			
+			```
+		formatString: #,0
+		displayFolder: Vendas
+		lineageTag: 8cf5fed2-3996-495c-956d-e416588c619c
+
+	measure 'Margem Produto %' = ```
+			DIVIDE ( SUM ( fVendas[Receita] ) - SUM ( fVendas[CMV] ), SUM ( fVendas[Receita] ) )
+			
+			```
+		formatString: 0.0%;-0.0%;0.0%
+		displayFolder: Vendas
+		lineageTag: 60790990-5b06-4c48-9260-6cebdece15b7
+
+	measure '% do Faturamento Produto' = ```
+			
+			    DIVIDE ( [Faturamento Produto], CALCULATE ( [Faturamento Produto], ALLSELECTED ( dProduto ) ) )
+			```
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: Vendas
+		lineageTag: 369ecfa3-dec7-4a7c-a9e9-44b228b75297
+
+	measure 'Faturamento Ano Anterior' =
+			VAR ult = CALCULATE ( MAX ( fCupons[Data] ), ALL ( fCupons ) )
+			RETURN CALCULATE ( [Faturamento], CALCULATETABLE ( SAMEPERIODLASTYEAR ( dCalendario[Data] ), KEEPFILTERS ( dCalendario[Data] <= ult ) ) )
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Tempo
+		lineageTag: f6ae9676-4b13-4212-8249-2bf9662fac73
+
+	measure 'Crescimento vs AA %' = DIVIDE ( [Faturamento Comparável] - [Faturamento Ano Anterior], [Faturamento Ano Anterior] )
+		formatString: 0.0%;-0.0%;0.0%
+		displayFolder: Tempo
+		lineageTag: b0b7c34f-262d-4f62-9c87-300566c2b3e3
+
+	measure 'Faturamento Mês Anterior' = CALCULATE ( [Faturamento], DATEADD ( dCalendario[Data], -1, MONTH ) )
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Tempo
+		lineageTag: da84dab6-1047-4302-a186-b0ecd65e34c1
+
+	measure 'Faturamento 12m' = ```
+			
+			    CALCULATE ( [Faturamento], DATESINPERIOD ( dCalendario[Data], MAX ( dCalendario[Data] ), -12, MONTH ) )
+			
+			```
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Tempo
+		lineageTag: 60b063e5-2e58-4a3b-9be2-19b0aa898601
+
+	measure 'Faturamento Acumulado Ano' = ```
+			TOTALYTD ( [Faturamento], dCalendario[Data] )
+			
+			```
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Tempo
+		lineageTag: a7b685a6-1171-43e8-8026-722956cbd4cb
+
+	/// Crescimento das lojas abertas há mais de 12 meses: compara o período escolhido (a partir do 13º mês de dados) com o mesmo período do ano anterior. Lojas inauguradas depois ficam de fora.
+	measure 'Crescimento Mesmas Lojas %' =
+			VAR ult = CALCULATE ( MAX ( fCupons[Data] ), ALL ( fCupons ) )
+			VAR prim = CALCULATE ( MIN ( fCupons[Data] ), ALL ( fCupons ) )
+			VAR iniComp = EDATE ( prim, 12 )
+			VAR datas =
+			    CALCULATETABLE (
+			        VALUES ( dCalendario[Data] ),
+			        KEEPFILTERS ( dCalendario[Data] >= iniComp ),
+			        KEEPFILTERS ( dCalendario[Data] <= ult )
+			    )
+			VAR inicio = MINX ( datas, dCalendario[Data] )
+			VAR lojas =
+			    CALCULATETABLE (
+			        VALUES ( dUnidade[UnidadeID] ),
+			        KEEPFILTERS ( dUnidade[Tipo] = "LOJA" ),
+			        KEEPFILTERS ( dUnidade[Inauguracao] <= EDATE ( inicio, -12 ) )
+			    )
+			VAR atual = CALCULATE ( [Faturamento], lojas, datas )
+			VAR anterior = CALCULATE ( [Faturamento], lojas, CALCULATETABLE ( SAMEPERIODLASTYEAR ( dCalendario[Data] ), datas ) )
+			RETURN IF ( ISEMPTY ( datas ) || ISEMPTY ( lojas ), BLANK (), DIVIDE ( atual - anterior, anterior ) )
+		formatString: 0.0%;-0.0%;0.0%
+		displayFolder: Tempo
+		lineageTag: b0cc0208-b1df-45f0-8af3-01c9e4c8d2cf
+
+	measure 'Lojas com Venda' = ```
+			CALCULATE ( DISTINCTCOUNT ( fCupons[UnidadeID] ), fCupons[Cupons] > 0 )
+			
+			```
+		formatString: 0
+		displayFolder: Tempo
+		lineageTag: 5004b123-eada-4752-91f9-cb83fdd55521
+
+	measure 'Faturamento por m² Ano' =
+			
+			VAR area =
+			    SUMX ( FILTER ( VALUES ( dUnidade[UnidadeID] ), [Faturamento] > 0 ), CALCULATE ( MAX ( dUnidade[AreaM2] ) ) )
+			VAR dias = DATEDIFF ( MIN ( fCupons[Data] ), MAX ( fCupons[Data] ), DAY ) + 1
+			RETURN DIVIDE ( [Faturamento], area ) * DIVIDE ( 365, dias )
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Tempo
+		lineageTag: 048d7de2-b47e-46f5-9d18-dd8fc7303591
+
+	measure Perdas = ```
+			CALCULATE ( SUM ( fPerdas[Valor] ), fPerdas[Tipo] IN { "PERDA", "AJUSTE_INVENTARIO" } )
+			
+			```
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Operação
+		lineageTag: c8bd2d28-67cf-4dd4-82ba-711e91ec2a1e
+
+	measure 'Perdas % Faturamento' = ```
+			DIVIDE ( [Perdas], [Faturamento] )
+			
+			```
+		formatString: 0.0%;-0.0%;0.0%
+		displayFolder: Operação
+		lineageTag: d83c77ac-00f9-4ff5-bac2-7e1398c4f62a
+
+	measure 'Consumo Interno' = ```
+			CALCULATE ( SUM ( fPerdas[Valor] ), fPerdas[Tipo] = "CONSUMO_INTERNO" )
+			
+			```
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Operação
+		lineageTag: 2a4b9ede-2a49-4e7c-925f-da177d78e66f
+
+	measure 'Venda Perdida por Ruptura' = ```
+			SUM ( fRupturas[VendaPerdida] )
+			
+			```
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Operação
+		lineageTag: 0cd4d4f1-4dd5-4c59-be80-d6c6690af312
+
+	measure 'Custo de Pessoal' = ```
+			SUM ( fFolha[CustoTotal] )
+			
+			```
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Operação
+		lineageTag: 63f6d256-e18b-405a-9ff3-1d2d631f740f
+
+	measure 'Pessoal % Faturamento' = ```
+			DIVIDE ( [Custo de Pessoal], [Faturamento] )
+			
+			```
+		formatString: 0.0%;-0.0%;0.0%
+		displayFolder: Operação
+		lineageTag: b996200d-06af-449e-8ef4-49ee8aa69532
+
+	measure 'Funcionários (média)' = AVERAGEX ( VALUES ( dCalendario[AnoMes] ), CALCULATE ( SUM ( fFolha[Funcionarios] ) ) )
+		formatString: #,0
+		displayFolder: Operação
+		lineageTag: ead3972f-9f5f-4dfa-bbe2-10b76708e1fd
+
+	measure 'Valor Transferido' = ```
+			SUM ( fTransferencias[ValorTransferencia] )
+			
+			```
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Logística
+		lineageTag: 9703965c-e554-4338-9ed5-1050a8af9a78
+
+	measure Frete = ```
+			SUM ( fTransferencias[Frete] )
+			
+			```
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Logística
+		lineageTag: 86e9437a-9355-4d94-b45f-d130f55a85b7
+
+	measure 'Frete % Transferido' = ```
+			DIVIDE ( [Frete], [Valor Transferido] )
+			
+			```
+		formatString: 0.0%;-0.0%;0.0%
+		displayFolder: Logística
+		lineageTag: 12033970-f2c6-4fed-a884-de08c9e990d2
+
+	measure 'Frete % Faturamento' = ```
+			DIVIDE ( [Frete], [Faturamento] )
+			
+			```
+		formatString: 0.0%;-0.0%;0.0%
+		displayFolder: Logística
+		lineageTag: e38072ec-c100-4db7-a867-2df82b7cfb53
+
+	measure Viagens = ```
+			SUM ( fTransferencias[Viagens] )
+			
+			```
+		formatString: #,0
+		displayFolder: Logística
+		lineageTag: 24683a60-5ce5-46d7-8aed-ec167dbc2fc0
+
+	measure 'Custo por Viagem' = ```
+			DIVIDE ( [Frete], [Viagens] )
+			
+			```
+		formatString: \R$ #,0.00;-\R$ #,0.00;\R$ #,0.00
+		displayFolder: Logística
+		lineageTag: 087649d1-afb9-469a-a8d2-addb375bb7a7
+
+	measure 'Lead Time Médio (dias)' = ```
+			AVERAGE ( fTransferencias[LeadTimeDias] )
+			
+			```
+		formatString: #,0.0
+		displayFolder: Logística
+		lineageTag: dd847e19-e7dc-4403-b292-b24039718a0d
+
+	measure 'Margem de Distribuição CD' = ```
+			SUM ( fTransferencias[ValorTransferencia] ) - SUM ( fTransferencias[CustoCD] )
+			
+			```
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Logística
+		lineageTag: 9d730277-2039-46d4-ae14-b9e991409832
+
+	measure 'Frete (visão CD)' = ```
+			
+			    CALCULATE ( [Frete], USERELATIONSHIP ( fTransferencias[CDID], dUnidade[UnidadeID] ) )
+			
+			```
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Logística
+		lineageTag: 17773d4c-fd85-4487-b94a-a445cc6927cb
+
+	measure 'Valor Transferido (visão CD)' = ```
+			
+			    CALCULATE ( [Valor Transferido], USERELATIONSHIP ( fTransferencias[CDID], dUnidade[UnidadeID] ) )
+			```
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Logística
+		lineageTag: b4d9654b-d61f-4987-9f03-0ae89752b367
+
+	measure 'DRE Valor' = ```
+			SUM ( fDRE[Valor] )
+			
+			```
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Financeiro
+		lineageTag: 39fe5df2-da85-43c0-ba8d-30cc0ac923ea
+
+	measure 'Base DRE' = ```
+			
+			    CALCULATE ( [DRE Valor], fDRE[Chave] IN { "receita_bruta", "receitas_franquia", "margem_distribuicao" } )
+			
+			```
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Financeiro
+		lineageTag: f54fecca-d21c-4254-bac9-0239937d618f
+
+	measure EBITDA = ```
+			CALCULATE ( [DRE Valor], fDRE[Chave] = "ebitda" )
+			
+			```
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Financeiro
+		lineageTag: 65b609d7-6e6c-47a7-b4a2-823cf6020271
+
+	measure LAIR = ```
+			CALCULATE ( [DRE Valor], fDRE[Chave] = "lair" )
+			
+			```
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Financeiro
+		lineageTag: f574caea-6b0a-4273-ae53-34a60771bc7a
+
+	measure 'Lucro Líquido' = ```
+			CALCULATE ( [DRE Valor], fDRE[Chave] = "lucro_liquido" )
+			
+			```
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Financeiro
+		lineageTag: a06d780b-cf86-4761-a413-5aa9c0623d3d
+
+	measure 'Margem EBITDA %' = ```
+			DIVIDE ( [EBITDA], [Base DRE] )
+			
+			```
+		formatString: 0.0%;-0.0%;0.0%
+		displayFolder: Financeiro
+		lineageTag: 096ba2a6-b314-4e2e-b7c4-3a7bdc9d2c87
+
+	measure 'Margem LAIR %' = ```
+			DIVIDE ( [LAIR], [Base DRE] )
+			
+			```
+		formatString: 0.0%;-0.0%;0.0%
+		displayFolder: Financeiro
+		lineageTag: 51fb52c6-864b-497b-a7ce-f918d158dabb
+
+	measure 'Margem Líquida %' = ```
+			DIVIDE ( [Lucro Líquido], [Base DRE] )
+			
+			```
+		formatString: 0.0%;-0.0%;0.0%
+		displayFolder: Financeiro
+		lineageTag: 0bf611ba-29b8-4df6-adae-65d80b62e4bb
+
+	measure 'DRE % Vertical' = ```
+			DIVIDE ( [DRE Valor], CALCULATE ( [Base DRE], ALL ( fDRE[Linha], fDRE[Ordem], fDRE[Chave], fDRE[Nivel] ) ) )
+			
+			```
+		formatString: 0.0%;-0.0%;0.0%
+		displayFolder: Financeiro
+		lineageTag: 9e6211a5-c4f4-4a68-b096-ca459de414f8
+
+	measure Royalties = ```
+			CALCULATE ( SUM ( fReceitasFranquia[Valor] ), fReceitasFranquia[Tipo] = "ROYALTIES" )
+			
+			```
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Financeiro
+		lineageTag: 1d0cff92-4332-4de1-8545-9f02fe99095f
+
+	measure 'Fundo de Marketing' = ```
+			CALCULATE ( SUM ( fReceitasFranquia[Valor] ), fReceitasFranquia[Tipo] = "FUNDO_MARKETING" )
+			
+			```
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Financeiro
+		lineageTag: 99a97387-12a9-4152-9e9b-c9e8f4ec092e
+
+	measure 'Despesas Fixas' = ```
+			CALCULATE ( SUM ( fDespesas[Valor] ), fDespesas[Tipo] = "FIXA", fDespesas[GrupoDRE] <> "DEPRECIACAO" )
+			
+			```
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Financeiro
+		lineageTag: 0f0672b5-e1d4-433e-9f24-8a116ec8c252
+
+	measure 'Despesas Variáveis' = ```
+			CALCULATE ( SUM ( fDespesas[Valor] ), fDespesas[Tipo] = "VARIAVEL" )
+			
+			```
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Financeiro
+		lineageTag: 71f38365-773c-4cd7-b951-093f8f3b11ed
+
+	measure 'Margem de Contribuição %' = ```
+			
+			    DIVIDE ( [Lucro Bruto] - [Perdas] - [Consumo Interno] - [Despesas Variáveis], [Faturamento] )
+			
+			```
+		formatString: 0.0%;-0.0%;0.0%
+		displayFolder: Financeiro
+		lineageTag: 58bda187-b83b-475f-851d-bc1e5568385e
+
+	measure 'Ponto de Equilíbrio Mensal' =
+			
+			VAR meses = DISTINCTCOUNT ( dCalendario[AnoMes] )
+			VAR fixos = [Custo de Pessoal] + [Despesas Fixas]
+			RETURN DIVIDE ( DIVIDE ( fixos, meses ), [Margem de Contribuição %] )
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Financeiro
+		lineageTag: 8e7e5a77-ebd4-4f8b-aac3-024d9abbd118
+
+	measure Clientes = ```
+			DISTINCTCOUNT ( dCliente[ClienteID] )
+			
+			```
+		formatString: 0
+		displayFolder: Clientes
+		lineageTag: 74f19e5f-42f8-427e-8240-559e0d61411d
+
+	measure 'Clientes Ativos 6m' = ```
+			CALCULATE ( [Clientes], dCliente[Compras6m] > 0 )
+			
+			```
+		formatString: #,0
+		displayFolder: Clientes
+		lineageTag: d71675bb-5e67-4664-bfe5-c960146d57d9
+
+	measure 'Valor Clientes 6m' = ```
+			SUM ( dCliente[Valor6m] )
+			
+			```
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Clientes
+		lineageTag: 6f832c25-f87f-4803-981d-aae265641dc3
+
+	measure '% Valor da Faixa' = ```
+			
+			    DIVIDE ( [Valor Clientes 6m], CALCULATE ( [Valor Clientes 6m], ALL ( dCliente[FaixaDistancia] ) ) )
+			```
+		formatString: 0.0%;-0.0%;0.0%
+		displayFolder: Clientes
+		lineageTag: 381a11c0-3d26-4b91-9d6a-9e1fadb54b97
+
+	measure 'Título Período' = ```
+			
+			    "De " & FORMAT ( MIN ( dCalendario[Data] ), "mmm/yy" ) & " a " & FORMAT ( MAX ( dCalendario[Data] ), "mmm/yy" )
+			
+			```
+		displayFolder: Textos Dinâmicos
+		lineageTag: cd646416-3a88-44b3-817e-7c3d79e3e84c
+
+	measure 'Insight Crescimento' =
+			
+			VAR c = [Crescimento Mesmas Lojas %]
+			RETURN
+			    IF ( ISBLANK ( c ), "Sem base de comparação para o período.",
+			        "Nas lojas com mais de 1 ano, o faturamento " & IF ( c >= 0, "cresceu ", "caiu " ) & FORMAT ( ABS ( c ), "0.0%" )
+			            & " frente ao mesmo período do ano anterior." )
+		displayFolder: Textos Dinâmicos
+		lineageTag: 0c82b55c-31da-40db-ae42-106d7480b83e
+
+	measure 'HTML Card Faturamento' = ```
+			
+			VAR v = [Faturamento]
+			VAR c = [Crescimento vs AA %]
+			VAR cor = IF ( c >= 0, "#0b7a0b", "#c0392b" )
+			VAR seta = IF ( c >= 0, "▲", "▼" )
+			RETURN
+			    "<div style='font-family:Segoe UI,sans-serif;padding:14px 16px;border-radius:12px;background:#fff;border:1px solid #e6e6e1'>"
+			        & "<div style='font-size:12px;color:#6b6a66;letter-spacing:.02em'>FATURAMENTO</div>"
+			        & "<div style='font-size:28px;font-weight:700;color:#0b0b0b;margin:4px 0'>R$ " & FORMAT ( v / 1000000, "#,0.0" ) & " mi</div>"
+			        & "<div style='font-size:12px;font-weight:600;color:" & cor & "'>" & seta & " " & FORMAT ( ABS ( c ), "0.0%" ) & " vs ano anterior</div>"
+			        & "</div>"
+			
+			
+			```
+		displayFolder: Visuais HTML
+		lineageTag: 09e6a515-0871-4536-bf59-77dcd54d6daa
+
+	measure 'HTML Ranking Lojas' = ```
+			
+			VAR maximo = MAXX ( ALLSELECTED ( dUnidade[Codigo] ), [Faturamento] )
+			VAR linhas =
+			    CONCATENATEX (
+			        FILTER ( ALLSELECTED ( dUnidade[Codigo], dUnidade[Cidade], dUnidade[Modelo] ), [Faturamento] > 0 ),
+			        VAR f = [Faturamento]
+			        VAR largura = FORMAT ( DIVIDE ( f, maximo ) * 100, "0" )
+			        VAR cor = IF ( dUnidade[Modelo] = "PROPRIA", "#2a78d6", "#eb6834" )
+			        RETURN
+			            "<div style='display:flex;align-items:center;gap:8px;margin:5px 0;font-size:12px'>"
+			                & "<div style='width:120px;color:#333'>" & dUnidade[Codigo] & " " & dUnidade[Cidade] & "</div>"
+			                & "<div style='flex:1;background:#f1f0ec;border-radius:4px;height:14px'>"
+			                & "<div style='width:" & largura & "%;background:" & cor & ";height:14px;border-radius:4px'></div></div>"
+			                & "<div style='width:70px;text-align:right;font-variant-numeric:tabular-nums'>R$ " & FORMAT ( f / 1000000, "#,0.0" ) & " mi</div></div>",
+			        "",
+			        [Faturamento], DESC
+			    )
+			RETURN
+			    "<div style='font-family:Segoe UI,sans-serif'>"
+			        & "<div style='font-size:12px;color:#6b6a66;margin-bottom:6px'>FATURAMENTO POR LOJA · <span style='color:#2a78d6'>■ própria</span> <span style='color:#eb6834'>■ franquia</span></div>"
+			        & linhas & "</div>"
+			
+			```
+		displayFolder: Visuais HTML
+		lineageTag: 750ecf87-987e-42dc-9714-94719b975e33
+
+	measure 'HTML Semáforo Frete' = ```
+			
+			VAR p = [Frete % Faturamento]
+			VAR cor = SWITCH ( TRUE (), p > 0.02, "#c0392b", p > 0.01, "#b97800", "#0b7a0b" )
+			VAR rotulo = SWITCH ( TRUE (), p > 0.02, "Crítico", p > 0.01, "Atenção", "Saudável" )
+			RETURN
+			    "<div style='font-family:Segoe UI,sans-serif;display:flex;align-items:center;gap:10px'>"
+			        & "<span style='width:14px;height:14px;border-radius:50%;background:" & cor & ";display:inline-block'></span>"
+			        & "<span style='font-size:13px'><b>" & rotulo & "</b> · frete = " & FORMAT ( p, "0.00%" ) & " do faturamento</span></div>"
+			
+			```
+		displayFolder: Visuais HTML
+		lineageTag: 55ff706b-99ef-4228-ae4c-15cabf5580c6
+
+	measure 'Cupons AA' =
+			VAR ult = CALCULATE ( MAX ( fCupons[Data] ), ALL ( fCupons ) )
+			RETURN CALCULATE ( [Cupons], CALCULATETABLE ( SAMEPERIODLASTYEAR ( dCalendario[Data] ), KEEPFILTERS ( dCalendario[Data] <= ult ) ) )
+		formatString: #,0
+		displayFolder: Tempo
+		lineageTag: a1ea1cc9-a624-4b04-b39e-4159281cc15c
+
+	measure 'CMV AA' =
+			VAR ult = CALCULATE ( MAX ( fCupons[Data] ), ALL ( fCupons ) )
+			RETURN CALCULATE ( [CMV], CALCULATETABLE ( SAMEPERIODLASTYEAR ( dCalendario[Data] ), KEEPFILTERS ( dCalendario[Data] <= ult ) ) )
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Tempo
+		lineageTag: 34b7dcc5-b1b8-4de5-9bd5-bf232d085834
+
+	measure 'Ticket Médio AA' = DIVIDE ( [Faturamento Ano Anterior], [Cupons AA] )
+		formatString: \R$ #,0.00;-\R$ #,0.00;\R$ #,0.00
+		displayFolder: Tempo
+		lineageTag: a6301ceb-f98c-46f8-a8de-a3229d0dd562
+
+	measure 'Margem Bruta % AA' = DIVIDE ( [Faturamento Ano Anterior] - [CMV AA], [Faturamento Ano Anterior] )
+		formatString: 0.0%;-0.0%;0.0%
+		displayFolder: Tempo
+		lineageTag: bc680c53-cd24-4112-823e-f662f2c55da6
+
+	measure 'Margem de Distribuição (visão CD)' = CALCULATE ( [Margem de Distribuição CD], USERELATIONSHIP ( fTransferencias[CDID], dUnidade[UnidadeID] ) )
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Logística
+		lineageTag: 93cde117-d32a-46f5-b141-ea2b8a6efa86
+
+	measure 'Cor Modelo' = SWITCH ( SELECTEDVALUE ( dUnidade[Modelo] ), "PROPRIA", "#2A78D6", "FRANQUIA", "#EB6834", "#898781" )
+		displayFolder: Cards
+		lineageTag: 4cfa522e-c958-42dd-ab01-375de9cdefc2
+
+	measure 'Distância Média do CD (km)' = AVERAGE ( dUnidade[DistanciaCDkm] )
+		formatString: #,0
+		displayFolder: Logística
+		lineageTag: d6c90f21-2f3f-4d27-a874-ab31b6537e73
+
+	measure 'Subtítulo Página' =
+			VAR ini = CALCULATE ( MIN ( fCupons[Data] ), REMOVEFILTERS ( dUnidade ) )
+			VAR fim = CALCULATE ( MAX ( fCupons[Data] ), REMOVEFILTERS ( dUnidade ) )
+			VAR visao =
+			    SWITCH (
+			        TRUE (),
+			        HASONEVALUE ( dUnidade[Loja] ), SELECTEDVALUE ( dUnidade[Loja] ),
+			        ISFILTERED ( dUnidade[Modelo de Negócio] ) && HASONEVALUE ( dUnidade[Modelo de Negócio] ), SELECTEDVALUE ( dUnidade[Modelo de Negócio] ),
+			        ISFILTERED ( dUnidade[Regiao] ) && HASONEVALUE ( dUnidade[Regiao] ), "Região " & SELECTEDVALUE ( dUnidade[Regiao] ),
+			        "Rede completa"
+			    )
+			RETURN visao & "  ·  " & FORMAT ( ini, "mmm/yy" ) & " a " & FORMAT ( fim, "mmm/yy" )
+		displayFolder: Textos Dinâmicos
+		lineageTag: 670dcf72-d698-4fb4-9eb5-6181aa9237b9
+
+	measure 'Card Var Faturamento' =
+			VAR a = [Faturamento Comparável]
+			VAR b = [Faturamento Ano Anterior]
+			VAR v = DIVIDE ( a - b, b )
+			RETURN IF ( ISBLANK ( b ) || ISBLANK ( a ), "sem base no ano anterior", IF ( v >= 0, "▲ ", "▼ " ) & FORMAT ( v, "+0.0%;-0.0%" ) & " vs ano anterior" )
+		displayFolder: Cards
+		lineageTag: 32a49390-28ea-410e-aebb-a0520963617e
+
+	measure 'Card Cor Faturamento' =
+			VAR a = [Faturamento Comparável]
+			VAR b = [Faturamento Ano Anterior]
+			RETURN IF ( ISBLANK ( b ) || ISBLANK ( a ), "#898781", IF ( a >= b, "#006300", "#D03B3B" ) )
+		displayFolder: Cards
+		lineageTag: 1a99b4e5-5ae5-4e17-801d-5fcb2706e9e4
+
+	measure 'Card Var Ticket' =
+			VAR a = [Ticket Médio Comparável]
+			VAR b = [Ticket Médio AA]
+			VAR v = DIVIDE ( a - b, b )
+			RETURN IF ( ISBLANK ( b ) || ISBLANK ( a ), "sem base no ano anterior", IF ( v >= 0, "▲ ", "▼ " ) & FORMAT ( v, "+0.0%;-0.0%" ) & " vs ano anterior" )
+		displayFolder: Cards
+		lineageTag: 2ad9ec10-b6b6-4430-bdc0-83de16e54c63
+
+	measure 'Card Cor Ticket' =
+			VAR a = [Ticket Médio Comparável]
+			VAR b = [Ticket Médio AA]
+			RETURN IF ( ISBLANK ( b ) || ISBLANK ( a ), "#898781", IF ( a >= b, "#006300", "#D03B3B" ) )
+		displayFolder: Cards
+		lineageTag: 99272d6a-645d-4f57-84d9-0bca22f32172
+
+	measure 'Card Var Cupons' =
+			VAR a = [Cupons Comparável]
+			VAR b = [Cupons AA]
+			VAR v = DIVIDE ( a - b, b )
+			RETURN IF ( ISBLANK ( b ) || ISBLANK ( a ), "sem base no ano anterior", IF ( v >= 0, "▲ ", "▼ " ) & FORMAT ( v, "+0.0%;-0.0%" ) & " vs ano anterior" )
+		displayFolder: Cards
+		lineageTag: dd8e50e8-17ff-4422-97fe-cafc2e011f67
+
+	measure 'Card Cor Cupons' =
+			VAR a = [Cupons Comparável]
+			VAR b = [Cupons AA]
+			RETURN IF ( ISBLANK ( b ) || ISBLANK ( a ), "#898781", IF ( a >= b, "#006300", "#D03B3B" ) )
+		displayFolder: Cards
+		lineageTag: ca7c9336-63f2-4df5-b193-e641691f790b
+
+	measure 'Card Var Margem' =
+			VAR a = [Margem Bruta % Comparável]
+			VAR b = [Margem Bruta % AA]
+			VAR d = ( a - b ) * 100
+			RETURN IF ( ISBLANK ( b ) || ISBLANK ( a ), "sem base no ano anterior", IF ( d >= 0, "▲ ", "▼ " ) & FORMAT ( d, "+0.0;-0.0" ) & " p.p. vs ano anterior" )
+		displayFolder: Cards
+		lineageTag: 145c14a2-3274-462b-898e-86e0dc03d7aa
+
+	measure 'Card Cor Margem' =
+			VAR a = [Margem Bruta % Comparável]
+			VAR b = [Margem Bruta % AA]
+			RETURN IF ( ISBLANK ( b ) || ISBLANK ( a ), "#898781", IF ( a >= b, "#006300", "#D03B3B" ) )
+		displayFolder: Cards
+		lineageTag: 14d380e0-4a27-40ab-97cd-971a81fde39c
+
+	measure 'Faturamento UF' =
+			VAR uf = SELECTEDVALUE ( dUnidade[UF] )
+			RETURN CALCULATE ( [Faturamento], ALLSELECTED ( dUnidade ), dUnidade[UF] = uf )
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Mapa
+		lineageTag: 8083dc13-3791-4807-a4eb-74a3b518999f
+
+	measure 'Lat CD' =
+			VAR cd = SELECTEDVALUE ( dUnidade[CD] )
+			RETURN IF ( NOT ISBLANK ( cd ), CALCULATE ( MAX ( dUnidade[Latitude] ), REMOVEFILTERS ( dUnidade ), dUnidade[Codigo] = cd ) )
+		formatString: 0.0000
+		displayFolder: Mapa
+		lineageTag: 7e1c5db8-ad8f-4417-9017-17c3b7f16d97
+
+	measure 'Lon CD' =
+			VAR cd = SELECTEDVALUE ( dUnidade[CD] )
+			RETURN IF ( NOT ISBLANK ( cd ), CALCULATE ( MAX ( dUnidade[Longitude] ), REMOVEFILTERS ( dUnidade ), dUnidade[Codigo] = cd ) )
+		formatString: 0.0000
+		displayFolder: Mapa
+		lineageTag: 0a8a164d-e98c-4e12-be8e-c87914b44155
+
+	measure 'Lat Clientes' = AVERAGE ( dCliente[Latitude] )
+		formatString: 0.0000
+		displayFolder: Clientes
+		lineageTag: 7ba55da2-4f13-46e7-9991-5d58e52c0ee7
+
+	measure 'Lon Clientes' = AVERAGE ( dCliente[Longitude] )
+		formatString: 0.0000
+		displayFolder: Clientes
+		lineageTag: 0dda6943-bd7a-4263-850a-344cd6b75c60
+
+	measure 'Distância Média Clientes (km)' = AVERAGE ( dCliente[DistanciaKm] )
+		formatString: #,0.0
+		displayFolder: Clientes
+		lineageTag: 4d1f22bb-fc6e-44d7-9705-2380845805e8
+
+	measure 'Lat Unidade' = MAX ( dUnidade[Latitude] )
+		formatString: 0.0000
+		displayFolder: Mapa
+		lineageTag: ba60f9e7-ed38-4525-a3b4-db2eaa716d52
+
+	measure 'Lon Unidade' = MAX ( dUnidade[Longitude] )
+		formatString: 0.0000
+		displayFolder: Mapa
+		lineageTag: c86eca74-dd89-4c7a-9b42-8c635a3ece4c
+
+	measure 'Gasto Médio Cliente 6m' = DIVIDE ( [Valor Clientes 6m], [Clientes Ativos 6m] )
+		formatString: \R$ #,0.00;-\R$ #,0.00;\R$ #,0.00
+		displayFolder: Clientes
+		lineageTag: 8e6881b9-16cc-4679-8c77-072d00e4715a
+
+	measure 'Habitantes por Supermercado' = DIVIDE ( SUM ( dCidade[Populacao] ), SUM ( dCidade[Concorrentes] ) + 1 )
+		formatString: #,0
+		displayFolder: Expansão
+		lineageTag: ea48f971-729b-4ded-ad7e-7fd272d072d9
+
+	measure Salários = SUM ( fFolha[SalarioBruto] )
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Operação
+		lineageTag: 79dc0cc1-c23f-4664-a888-61a982cbeafc
+
+	measure Encargos = SUM ( fFolha[Encargos] )
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Operação
+		lineageTag: e80cce9e-b59d-431b-8f0e-0b78fa02bf4c
+
+	measure Benefícios = SUM ( fFolha[Beneficios] )
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Operação
+		lineageTag: 15ade304-e255-4437-a5c9-f6cb2cf9bfb7
+
+	measure 'Provisões (13º e férias)' = SUM ( fFolha[Provisoes] )
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Operação
+		lineageTag: b624bbd5-9a57-4dd1-a2dd-60933bfa6399
+
+	measure 'Horas Extras' = SUM ( fFolha[HorasExtras] )
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Operação
+		lineageTag: 713397c7-dd72-40bf-97b7-613b308180f8
+
+	measure 'Custo Mensal por Funcionário' = DIVIDE ( [Custo de Pessoal], [Funcionários (média)] * DISTINCTCOUNT ( fFolha[Data] ) )
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Operação
+		lineageTag: 12df73fe-08a9-4afe-999b-1892cf7b2744
+
+	measure 'Faturamento Comparável' =
+			VAR ini = EDATE ( CALCULATE ( MIN ( fCupons[Data] ), ALL ( fCupons ) ), 12 )
+			RETURN CALCULATE ( [Faturamento], KEEPFILTERS ( dCalendario[Data] >= ini ) )
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Tempo
+		lineageTag: 48b215b8-7575-4c06-b658-05cd88c31c41
+
+	measure 'Cupons Comparável' =
+			VAR ini = EDATE ( CALCULATE ( MIN ( fCupons[Data] ), ALL ( fCupons ) ), 12 )
+			RETURN CALCULATE ( [Cupons], KEEPFILTERS ( dCalendario[Data] >= ini ) )
+		formatString: #,0
+		displayFolder: Tempo
+		lineageTag: 746fcf54-a469-4714-8f14-a86434429299
+
+	measure 'CMV Comparável' =
+			VAR ini = EDATE ( CALCULATE ( MIN ( fCupons[Data] ), ALL ( fCupons ) ), 12 )
+			RETURN CALCULATE ( [CMV], KEEPFILTERS ( dCalendario[Data] >= ini ) )
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Tempo
+		lineageTag: c4f2f335-6365-4840-b0b4-c0b5f90de741
+
+	measure 'Ticket Médio Comparável' = DIVIDE ( [Faturamento Comparável], [Cupons Comparável] )
+		formatString: \R$ #,0.00;-\R$ #,0.00;\R$ #,0.00
+		displayFolder: Tempo
+		lineageTag: 364765aa-aadb-468d-a7c6-353a5fdc1158
+
+	measure 'Margem Bruta % Comparável' = DIVIDE ( [Faturamento Comparável] - [CMV Comparável], [Faturamento Comparável] )
+		formatString: 0.0%;-0.0%;0.0%
+		displayFolder: Tempo
+		lineageTag: e156b371-d985-4fc5-8a77-8337a8e359c3
+
+	measure 'DRE Evolução' = IF ( ISFILTERED ( fDRE[Linha] ) && HASONEVALUE ( fDRE[Linha] ), [DRE Valor], [Lucro Líquido] )
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Financeiro
+		lineageTag: 79a6fea6-f3f6-4767-9d8c-f106c97e71ad
+
+	measure 'Título Evolução DRE' = "Evolução mensal: " & IF ( ISFILTERED ( fDRE[Linha] ) && HASONEVALUE ( fDRE[Linha] ), SELECTEDVALUE ( fDRE[Linha] ), "lucro líquido" )
+		displayFolder: Textos Dinâmicos
+		lineageTag: 95013199-c726-4778-927d-4c4a3b2719f9
+
+	measure 'Cor DRE Evolução' = IF ( [DRE Evolução] >= 0, "#1F6B45", "#EB6834" )
+		displayFolder: Cards
+		lineageTag: 7abe2a92-64ef-4851-a1e3-427d7c8e0af2
+
+	measure 'Na Visão Expansão' =
+			VAR regs = CALCULATETABLE ( VALUES ( dUnidade[Regiao] ), ALLSELECTED ( dUnidade ), REMOVEFILTERS ( dCidade ) )
+			RETURN IF ( SELECTEDVALUE ( dCidade[Regiao] ) IN regs, 1 )
+		formatString: 0
+		displayFolder: Expansão
+		lineageTag: 81c0617b-4a6c-494a-b10a-057930ab7b88
+
+	measure 'Habitantes por Supermercado (visão)' = IF ( NOT ISBLANK ( [Na Visão Expansão] ), [Habitantes por Supermercado] )
+		formatString: #,0
+		displayFolder: Expansão
+		lineageTag: 6f1127a8-f107-40d4-85bf-961a6dd949ef
+
+	measure '% Clientes até 3 km' = DIVIDE ( CALCULATE ( [Clientes], dCliente[FaixaDistancia] IN { "0-1 km", "1-3 km" } ), [Clientes] )
+		formatString: 0.0%;-0.0%;0.0%
+		displayFolder: Clientes
+		lineageTag: 7740beab-805a-438d-9e8e-3e1314c9e15e
+
+	measure 'Valor em Estoque' = SUM ( fEstoque[Valor] )
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Estoque
+		lineageTag: 75fbcf16-045a-4a7f-a0f1-4a9c607570eb
+
+	measure 'Custo Diário de Saída' = SUMX ( fEstoque, fEstoque[SaidaDia] * fEstoque[CustoMedio] )
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Estoque
+		lineageTag: bd061850-feaf-4fda-8ec6-bb6e3c13e6ac
+
+	measure 'Cobertura de Estoque (dias)' = DIVIDE ( [Valor em Estoque], [Custo Diário de Saída] )
+		formatString: #,0.0
+		displayFolder: Estoque
+		lineageTag: a6d39c18-6970-435c-a970-b6b6a8480120
+
+	measure 'Giro de Estoque (ano)' = DIVIDE ( [Custo Diário de Saída] * 365, [Valor em Estoque] )
+		formatString: #,0.0
+		displayFolder: Estoque
+		lineageTag: 56c85e33-e015-49c2-9565-f4a88de85c21
+
+	measure 'Itens sem Estoque' = CALCULATE ( COUNTROWS ( fEstoque ), fEstoque[Status] = "Sem estoque" ) + 0
+		formatString: #,0
+		displayFolder: Estoque
+		lineageTag: 3ddfc965-12a2-4c9e-8ca5-494bf4fc28ed
+
+	measure 'Itens Abaixo do Mínimo' = CALCULATE ( COUNTROWS ( fEstoque ), fEstoque[Status] IN { "Abaixo do mínimo", "Sem estoque" } ) + 0
+		formatString: #,0
+		displayFolder: Estoque
+		lineageTag: efa1f93c-55f9-4f35-8472-3a39b932bb6e
+
+	measure 'Valor em Excesso' = CALCULATE ( [Valor em Estoque], fEstoque[Status] = "Excesso" )
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Estoque
+		lineageTag: 9b419e5c-e962-4dd1-bb06-6090b5e6364b
+
+	measure 'Entradas de Caixa' = CALCULATE ( SUM ( fCaixa[Valor] ), fCaixa[Grupo] = "Entradas" )
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Caixa
+		lineageTag: 58a3923e-db7b-4387-913e-cf38a7b041aa
+
+	measure 'Saídas de Caixa' = - CALCULATE ( SUM ( fCaixa[Valor] ), fCaixa[Grupo] = "Saídas" )
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Caixa
+		lineageTag: 6ac91004-c5c1-4d98-b3cb-7229d57d6946
+
+	measure 'Geração de Caixa' = [Entradas de Caixa] - [Saídas de Caixa]
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Caixa
+		lineageTag: 981869bd-8195-4796-a683-48c4ed779ea3
+
+	measure 'Saldo de Caixa' =
+			VAR d = MAX ( dCalendario[Data] )
+			RETURN CALCULATE ( SUM ( fCaixa[Valor] ), REMOVEFILTERS ( dCalendario ), dCalendario[Data] <= d )
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Caixa
+		lineageTag: 2d57ebb4-3e92-4ade-9cfb-73e900422d46
+
+	measure 'Saldo Projetado' = SUM ( fCaixaProjetado[Saldo] )
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Caixa
+		lineageTag: 64342e51-fd58-4068-a6c6-7f82787c9257
+
+	measure 'Saldo em 60 Dias' =
+			VAR d = CALCULATE ( MAX ( fCaixaProjetado[Data] ), REMOVEFILTERS ( dCalendario ) )
+			RETURN CALCULATE ( SUM ( fCaixaProjetado[Saldo] ), REMOVEFILTERS ( dCalendario ), fCaixaProjetado[Data] = d )
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Caixa
+		lineageTag: fba60b7c-a077-4c37-98ba-7056efe1ce30
+
+	measure 'Contas a Pagar em Aberto' = CALCULATE ( SUM ( fContasPagar[Valor] ), fContasPagar[Status] = "ABERTO" )
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Caixa
+		lineageTag: efd0fc54-161f-4599-9c49-cbc667aa394d
+
+	measure 'Contas Vencidas' = CALCULATE ( [Contas a Pagar em Aberto], fContasPagar[FaixaOrdem] = 1 ) + 0
+		formatString: \R$ #,0;-\R$ #,0;\R$ #,0
+		displayFolder: Caixa
+		lineageTag: 5168524e-8410-4eb3-a02d-53aa2c08ce61
+
+	measure 'Texto Contas Vencidas' = "vencidas: R$ " & FORMAT ( [Contas Vencidas], "#,0" )
+		displayFolder: Textos Dinâmicos
+		lineageTag: 236f73eb-4aec-4d6f-9113-fd4a6d1e0f63
+
+	column '_Coluna 1'
+		dataType: string
+		isHidden
+		lineageTag: b2d9897f-a7e5-4d8a-90e9-94d5b182dfda
+		summarizeBy: none
+		sourceColumn: _Coluna 1
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	partition _Medidas = m
+		mode: import
+		source =
+				let
+				  Origem = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("i44FAA==", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [#"Coluna 1" = _t]),
+				    #"Colunas Renomeadas" = Table.RenameColumns(Origem,{{"Coluna 1", "_Coluna 1"}})
+				in
+				  #"Colunas Renomeadas"
+
+	annotation PBI_ResultType = Table
+

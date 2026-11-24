@@ -1,0 +1,41 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}
+{% block titulo %}Indicadores de RH{% endblock %}
+{% block conteudo %}
+<div class="topo"><div><h1>Indicadores de RH</h1><div class="sub">Turnover = média de admissões e desligamentos ÷ quadro médio. Absenteísmo = (faltas + atestados) ÷ dias escalados.</div></div>
+  <div class="filtros">{{ m.botao_excel() }}</div></div>
+{% set u = t[-1] %}
+<div class="grade g6">
+  {{ m.kpi('Quadro atual', u.headcount, u.temporarios ~ ' temporários') }}
+  {{ m.kpi('Turnover do mês', u.turnover|pct) }}
+  {{ m.kpi('Absenteísmo', u.absenteismo|pct(2)) }}
+  {{ m.kpi('Custo médio por funcionário', u.custo_por_func|brl) }}
+  {{ m.kpi('Folha ÷ faturamento', u.folha_sobre_receita|pct) }}
+  {{ m.kpi('Faturamento por funcionário', u.receita_por_func|mil) }}
+</div>
+<div class="grade g3 mt">
+  <div class="cartao"><h3>Quadro de funcionários</h3><div class="grafico baixo"><canvas id="gHc"></canvas></div></div>
+  <div class="cartao"><h3>Turnover mensal</h3><div class="grafico baixo"><canvas id="gTo"></canvas></div></div>
+  <div class="cartao"><h3>Custo de pessoal ÷ faturamento</h3><div class="grafico baixo"><canvas id="gFp"></canvas></div></div>
+</div>
+{% if por_un|length > 1 %}<div class="cartao mt"><h3>Comparativo por unidade (12 meses)</h3><div class="tabela-wrap"><table>
+  <tr><th>Unidade</th><th>Tipo</th><th class="n">Ativos</th><th class="n">Desligamentos 12m</th><th class="n">Turnover anual</th><th class="n">Custo de pessoal 12m</th><th class="n">% do faturamento</th></tr>
+  {% for r in por_un %}<tr><td>{{ r.codigo }} {{ r.nome }}</td><td>{{ r.tipo|capitalize }}{{ ' · franquia' if r.modelo == 'FRANQUIA' }}</td><td class="n">{{ r.ativos }}</td><td class="n">{{ r.deslig_12m }}</td><td class="n">{{ r.turnover_anual|pct }}</td><td class="n">{{ r.custo_12m|mil }}</td><td class="n">{{ r.folha_pct|pct if r.receita_12m else '–' }}</td></tr>{% endfor %}
+</table></div></div>{% endif %}
+<div class="grade g2 mt">
+  <div class="cartao"><h3>Motivos de desligamento</h3><table><tr><th>Motivo</th><th class="n">Qtd</th></tr>
+    {% for r in deslig %}<tr><td>{{ r.motivo }}</td><td class="n">{{ r.n }}</td></tr>{% endfor %}</table></div>
+  <div class="cartao"><h3>Desligamentos por cargo (no período)</h3><table><tr><th>Cargo</th><th class="n">Desligamentos</th><th class="n">Tempo médio de casa</th></tr>
+    {% for r in por_cargo %}<tr><td>{{ r.cargo }}</td><td class="n">{{ r.desligamentos }}</td><td class="n">{{ (r.dias_medios_casa/30)|num(1) }} meses</td></tr>{% endfor %}</table></div>
+</div>
+<div class="cartao mt"><div class="tabela-wrap"><table>
+  <tr><th>Mês</th><th class="n">Quadro</th><th class="n">Admissões</th><th class="n">Desligamentos</th><th class="n">Turnover</th><th class="n">Absenteísmo</th><th class="n">Horas extras (R$)</th><th class="n">Custo de pessoal</th><th class="n">% do faturamento</th></tr>
+  {% for r in t %}<tr><td>{{ rotulo_mes(r.competencia) }}</td><td class="n">{{ r.headcount }}</td><td class="n">{{ r.admissoes }}</td><td class="n">{{ r.desligamentos }}</td><td class="n">{{ r.turnover|pct }}</td>
+    <td class="n">{{ r.absenteismo|pct(2) }}</td><td class="n">{{ r.horas_extras|brl }}</td><td class="n">{{ r.custo_total|brl }}</td><td class="n">{{ r.folha_sobre_receita|pct }}</td></tr>{% endfor %}
+</table></div></div>
+{% endblock %}
+{% block scripts %}<script>
+const g = {{ g|tojson }};
+VV.grafico('gHc', g.meses, [{nome: 'Funcionários', dados: g.hc, slot: 0}], {fmt: 'num', legenda: false});
+VV.grafico('gTo', g.meses, [{nome: 'Turnover', dados: g.turnover, slot: 1, pontos: 3}], {tipo: 'line', fmt: 'pct', legenda: false});
+VV.grafico('gFp', g.meses, [{nome: 'Folha ÷ faturamento', dados: g.folha_pct, slot: 0, pontos: 3}], {tipo: 'line', fmt: 'pct', legenda: false});
+</script>{% endblock %}

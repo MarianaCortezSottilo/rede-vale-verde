@@ -1,0 +1,60 @@
+table fCaixaProjetado
+	lineageTag: 5219428b-04fe-48c4-b557-a268003aa6e1
+
+	column Data
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: ec81f264-0aa2-41e6-9bf7-3c38840b717a
+		summarizeBy: none
+		sourceColumn: Data
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column UnidadeID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: e7cc39ff-4296-486d-bedb-069e12e590c3
+		summarizeBy: none
+		sourceColumn: UnidadeID
+
+		annotation SummarizationSetBy = Automatic
+
+	column AReceber
+		dataType: double
+		lineageTag: 72671a51-1a80-4059-81be-300ec65576a7
+		summarizeBy: sum
+		sourceColumn: AReceber
+
+		annotation SummarizationSetBy = Automatic
+
+	column APagar
+		dataType: double
+		lineageTag: 2e090730-e26c-4431-bbad-3712d88916bb
+		summarizeBy: sum
+		sourceColumn: APagar
+
+		annotation SummarizationSetBy = Automatic
+
+	column Saldo
+		dataType: double
+		lineageTag: 445e099f-139b-4756-9767-dd8f9d0e7374
+		summarizeBy: none
+		sourceColumn: Saldo
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fCaixaProjetado = m
+		mode: import
+		source =
+				let
+				  Origem = Csv.Document(File.Contents("C:\Users\macor\OneDrive\Documentos\Vale Verde\mercado_vale_verde\powerbi\dados\fCaixaProjetado.csv"), [Delimiter = ";", Columns = 5, Encoding = 65001, QuoteStyle = QuoteStyle.None]),
+				  #"Cabeçalhos promovidos" = Table.PromoteHeaders(Origem, [PromoteAllScalars = true]),
+				  #"Tipo de coluna alterado" = Table.TransformColumnTypes(#"Cabeçalhos promovidos", {{"Data", type date}, {"UnidadeID", Int64.Type}, {"AReceber", type number}, {"APagar", type number}, {"Saldo", type number}}, "pt-BR")
+				in
+				  #"Tipo de coluna alterado"
+
+	annotation PBI_ResultType = Table
+

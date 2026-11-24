@@ -1,0 +1,80 @@
+table fReceitasFranquia
+	lineageTag: e9d639fe-75da-4df0-bc45-a9e2b2d118fb
+
+	/// Competência (1º dia do mês).
+	column Data
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 5f436ca5-46eb-44ae-ac80-3f7c0982faae
+		summarizeBy: none
+		sourceColumn: Data
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	/// Loja franqueada que paga.
+	column UnidadeID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 6d5bbe52-58a0-4592-8a29-5f35cd84b41a
+		summarizeBy: none
+		sourceColumn: UnidadeID
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	/// ROYALTIES (1,5% do faturamento), FUNDO_MARKETING (0,5%) ou TAXA_FRANQUIA (R$ 180 mil na abertura).
+	column Tipo
+		dataType: string
+		lineageTag: 25d04f8a-1221-4f04-a7ea-30a17b216446
+		summarizeBy: none
+		sourceColumn: Tipo
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Faturamento da loja usado no cálculo, em R$. Vazio na taxa de franquia.
+	column Base
+		dataType: double
+		lineageTag: 9e4361e5-a9b3-4f76-8565-0e6df00cd7b6
+		summarizeBy: sum
+		sourceColumn: Base
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// Valor devido, em R$.
+	column Valor
+		dataType: double
+		lineageTag: 38ef7b80-149b-4e24-8909-a18853b94076
+		summarizeBy: sum
+		sourceColumn: Valor
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// RECEBIDO ou ABERTO.
+	column Status
+		dataType: string
+		lineageTag: fc2cf7f9-9743-47f2-8025-61496f7b7c9c
+		summarizeBy: none
+		sourceColumn: Status
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fReceitasFranquia = m
+		mode: import
+		source =
+				let
+				  Origem = Csv.Document(File.Contents("C:\Users\macor\OneDrive\Documentos\Vale Verde\mercado_vale_verde\powerbi\dados\fReceitasFranquia.csv"), [Delimiter = ";", Columns = 6, Encoding = 65001, QuoteStyle = QuoteStyle.None]),
+				  #"Cabeçalhos promovidos" = Table.PromoteHeaders(Origem, [PromoteAllScalars = true]),
+				  #"Tipo de coluna alterado" = Table.TransformColumnTypes(#"Cabeçalhos promovidos", {{"Data", type date}, {"UnidadeID", Int64.Type}, {"Tipo", type text}, {"Base", type number}, {"Valor", type number}, {"Status", type text}})
+				in
+				  #"Tipo de coluna alterado"
+
+	annotation PBI_ResultType = Table
+

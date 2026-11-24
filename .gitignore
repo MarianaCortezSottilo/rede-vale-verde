@@ -1,0 +1,23 @@
+# Banco gerado (~500 MB): recrie com `python run.py`
+dados/*.db
+dados/*.db-journal
+
+# CSVs exportados para o Power BI: recrie com `python powerbi/exportar_powerbi.py`
+powerbi/dados/
+
+# Power BI: cache e configurações locais do PBIP
+**/.pbi/localSettings.json
+**/.pbi/cache.abf
+*.pbix
+*.pbix.bak
+*.zip
+
+# Python e editores
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.venv/
+.vscode/
+.DS_Store
+Thumbs.db
+desktop.ini

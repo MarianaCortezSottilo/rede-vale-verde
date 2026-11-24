@@ -1,0 +1,62 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}
+{% block titulo %}Área de influência{% endblock %}
+{% block head %}{% include '_leaflet.html' %}{% endblock %}
+{% block conteudo %}
+<div class="topo"><div><h1>Clientes e área de influência · {{ loja.codigo }} {{ loja.cidade }}</h1>
+  <div class="sub">{{ loja.nome }} · {{ n|num }} clientes do programa de fidelidade geolocalizados (endereços fictícios) · compras de {{ periodo.ini|data_br }} a {{ periodo.fim|data_br }}</div></div>
+  <form class="filtros"><label>Loja</label><select name="loja" onchange="this.form.submit()">{% for l in lojas %}<option value="{{ l.id }}" {{ 'selected' if l.id == uid }}>{{ l.codigo }} · {{ l.nome }}</option>{% endfor %}</select>{{ m.botao_excel() }}</form></div>
+<div class="grade g4">
+  {{ m.kpi('Clientes cadastrados', n|num, ativos|num ~ ' compraram no período') }}
+  {{ m.kpi('Raio que concentra 80% do valor', (raio80|num(1) ~ ' km') if raio80 else '–', 'distância do cliente até a loja') }}
+  {{ m.kpi('Até 3 km', (an[0].pct_valor + an[1].pct_valor)|pct, 'do valor comprado pelos clientes identificados') }}
+  {{ m.kpi('Concorrentes mapeados', conc|length, (conc|selectattr('distancia_km', 'le', 2)|list|length) ~ ' a até 2 km') }}
+</div>
+<div class="cartao mt">
+  <div class="controles-mapa">
+    <label>Camada <select id="camada"><option value="pontos">Clientes (pontos por valor)</option><option value="calor">Mapa de calor (valor comprado)</option></select></label>
+    <label><input type="checkbox" id="aneis" checked> anéis de 1, 3 e 5 km</label>
+    <label><input type="checkbox" id="concs" checked> concorrentes</label>
+    <label><input type="checkbox" id="bairros"> centros dos bairros</label>
+  </div>
+  <div id="mapa" class="mapa"></div>
+</div>
+<div class="grade g2 mt">
+  <div class="cartao"><h3>Valor comprado por faixa de distância</h3><div class="nota">Clientes mais próximos compram com mais frequência</div><div class="grafico"><canvas id="gFaixa"></canvas></div></div>
+  <div class="cartao"><h3>Faixas de distância</h3><table><tr><th>Faixa</th><th class="n">Clientes</th><th class="n">% clientes</th><th class="n">% valor</th><th class="n">Compras/cliente</th><th class="n">Ticket</th></tr>
+    {% for a in an %}<tr><td>{{ a.faixa }}</td><td class="n">{{ a.clientes|num }}</td><td class="n">{{ a.pct_clientes|pct }}</td><td class="n">{{ a.pct_valor|pct }}</td><td class="n">{{ a.freq|num(1) }}</td><td class="n">{{ a.ticket|brl }}</td></tr>{% endfor %}</table></div>
+  <div class="cartao"><h3>Bairros (fictícios)</h3><div class="rolagem" style="max-height:320px"><table><tr><th>Bairro</th><th class="n">Clientes</th><th class="n">Dist. média</th><th class="n">% valor</th></tr>
+    {% for b in bairros %}<tr><td>{{ b.bairro }}</td><td class="n">{{ b.clientes }}</td><td class="n">{{ b.dist|num(1) }} km</td><td class="n">{{ b.pct_valor|pct }}</td></tr>{% endfor %}</table></div></div>
+  <div class="cartao"><h3>Concorrentes (fictícios)</h3><div class="rolagem" style="max-height:320px"><table><tr><th>Nome</th><th>Formato</th><th class="n">Área</th><th class="n">Distância</th></tr>
+    {% for c in conc %}<tr><td>{{ c.nome }}</td><td>{{ c.formato }}</td><td class="n">{{ c.area_m2|num }} m²</td><td class="n">{{ c.distancia_km|num(1) }} km</td></tr>{% endfor %}</table></div></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const loja = {{ {'lat': loja.lat, 'lon': loja.lon, 'codigo': loja.codigo, 'nome': loja.nome}|tojson }};
+const pts = {{ pts|tojson }}, conc = {{ conc|tojson }}, bairros = {{ bairros|tojson }}, an = {{ an|tojson }};
+VV.grafico('gFaixa', an.map(a => a.faixa), [{nome: '% do valor', dados: an.map(a => +(a.pct_valor * 100).toFixed(1)), slot: 0},
+  {nome: '% dos clientes', dados: an.map(a => +(a.pct_clientes * 100).toFixed(1)), slot: 1}], {fmt: 'pct'});
+const mapa = VVMapa.criar('mapa', [loja.lat, loja.lon], 13);
+if (mapa) {
+  const camPts = L.layerGroup(), camAneis = L.layerGroup().addTo(mapa), camConc = L.layerGroup().addTo(mapa), camBai = L.layerGroup();
+  const vals = pts.map(p => p[2]);
+  const esc = VVMapa.escalaSeq(vals.filter(v => v > 0), ['#cde2fb', '#86b6ef', '#3987e5', '#1c5cab']);
+  pts.forEach(p => L.circleMarker([p[0], p[1]], {radius: p[2] > 0 ? 3.5 : 2.5, stroke: false, fillColor: p[2] > 0 ? esc(p[2]) : '#c3c2b7', fillOpacity: p[2] > 0 ? .85 : .5})
+    .bindTooltip(`${VV.brl(p[2])} em ${p[3]} compras · ${VV.fmtNum(1).format(p[4])} km`).addTo(camPts));
+  let calor = null;
+  if (L.heatLayer) calor = L.heatLayer(pts.filter(p => p[2] > 0).map(p => [p[0], p[1], Math.sqrt(p[2])]), {radius: 18, blur: 22, maxZoom: 15});
+  camPts.addTo(mapa);
+  [1, 3, 5].forEach(r => L.circle([loja.lat, loja.lon], {radius: r * 1000, color: '#52514e', weight: 1, dashArray: '5 5', fill: false}).bindTooltip(`${r} km`).addTo(camAneis));
+  conc.forEach(c => L.circleMarker([c.lat, c.lon], {radius: 4 + Math.sqrt(c.area_m2) / 12, color: '#fcfcfb', weight: 1.5, fillColor: VVMapa.cores.concorrente, fillOpacity: .85})
+    .bindPopup(`<b>${c.nome}</b><br>${c.formato} · ${VV.fmtNum(0).format(c.area_m2)} m²<br>${VV.fmtNum(1).format(c.distancia_km)} km da loja`).addTo(camConc));
+  bairros.forEach(b => L.circleMarker([b.lat, b.lon], {radius: 5 + 20 * Math.sqrt(b.pct_valor), color: '#6250d6', weight: 1.5, fillOpacity: .15})
+    .bindTooltip(`${b.bairro}: ${VV.fmtNum(1).format(b.pct_valor * 100)}% do valor`).addTo(camBai));
+  L.marker([loja.lat, loja.lon], {icon: L.divIcon({className: '', html: `<div style="background:${VVMapa.cores.loja};color:#fff;font:700 12px system-ui;padding:4px 6px;border-radius:5px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3)">${loja.codigo}</div>`})}).bindPopup(`<b>${loja.nome}</b>`).addTo(mapa);
+  document.getElementById('camada').onchange = e => { if (e.target.value === 'calor' && calor) { camPts.remove(); calor.addTo(mapa); } else { if (calor) calor.remove(); camPts.addTo(mapa); } };
+  document.getElementById('aneis').onchange = e => e.target.checked ? camAneis.addTo(mapa) : camAneis.remove();
+  document.getElementById('concs').onchange = e => e.target.checked ? camConc.addTo(mapa) : camConc.remove();
+  document.getElementById('bairros').onchange = e => e.target.checked ? camBai.addTo(mapa) : camBai.remove();
+  VVMapa.legenda(mapa, `<b>Clientes</b> (valor no período)<br><i style="background:#1c5cab"></i>maior valor<br><i style="background:#86b6ef"></i>menor valor<br><i style="background:#c3c2b7"></i>sem compra no período<br><i style="background:${VVMapa.cores.concorrente}"></i>concorrente (tamanho = área)`);
+}
+</script>
+{% endblock %}

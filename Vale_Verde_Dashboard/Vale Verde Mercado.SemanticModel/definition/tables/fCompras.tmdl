@@ -1,0 +1,124 @@
+table fCompras
+	lineageTag: b36cb5b3-6399-4a31-a37e-c5a987147fc8
+
+	/// Número do pedido. Não resumir.
+	column PedidoID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: e277befc-eaeb-416c-9ead-7e0eabe1ba8c
+		summarizeBy: none
+		sourceColumn: PedidoID
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = User
+
+	/// Unidade compradora (CD ou loja).
+	column UnidadeID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: f342734d-4869-48f8-be05-66d4fb437b78
+		summarizeBy: none
+		sourceColumn: UnidadeID
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Fornecedor.
+	column FornecedorID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: c862ae4e-dd4b-4302-a3c1-d5fa0b0893c5
+		summarizeBy: none
+		sourceColumn: FornecedorID
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Data do pedido.
+	column Data
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 69b30868-b5bf-46b5-ad33-91a325b9d086
+		summarizeBy: none
+		sourceColumn: Data
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	/// Data de entrega. Vazio se o pedido está aberto.
+	column DataRecebimento
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: e8dbe2e5-f9df-4643-9713-973ac690c55e
+		summarizeBy: none
+		sourceColumn: DataRecebimento
+
+		variation Variação
+			isDefault
+			relationship: 8072c6aa-7ad5-409f-8d66-157a9a734479
+			defaultHierarchy: LocalDateTable_322569c4-c96b-425e-9df0-fad0e080aa09.'Hierarquia de datas'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	/// RECEBIDO, RECEBIDO_PARCIAL ou ABERTO.
+	column Status
+		dataType: string
+		lineageTag: 039a6df9-da18-49a3-a5f1-68d261fd6b76
+		summarizeBy: none
+		sourceColumn: Status
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Valor total do pedido, em R$.
+	column Valor
+		dataType: double
+		lineageTag: b33408a9-5474-407e-9dc6-598d67cb9ce3
+		summarizeBy: sum
+		sourceColumn: Valor
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// Distância fornecedor → unidade, em km.
+	column DistanciaKm
+		dataType: double
+		lineageTag: 0b19182d-0875-479d-b750-bf73dd85c71b
+		summarizeBy: none
+		sourceColumn: DistanciaKm
+
+		annotation SummarizationSetBy = User
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// Dias entre pedido e entrega.
+	column LeadTimeDias
+		dataType: int64
+		formatString: 0
+		lineageTag: cc12287c-e344-47d4-8e4c-9c8c37c42beb
+		summarizeBy: none
+		sourceColumn: LeadTimeDias
+
+		annotation SummarizationSetBy = User
+
+	partition fCompras = m
+		mode: import
+		source =
+				let
+				  Origem = Csv.Document(File.Contents("C:\Users\macor\OneDrive\Documentos\Vale Verde\mercado_vale_verde\powerbi\dados\fCompras.csv"), [Delimiter = ";", Columns = 9, Encoding = 65001, QuoteStyle = QuoteStyle.None]),
+				  #"Cabeçalhos promovidos" = Table.PromoteHeaders(Origem, [PromoteAllScalars = true]),
+				  #"Tipo de coluna alterado" = Table.TransformColumnTypes(#"Cabeçalhos promovidos", {{"PedidoID", Int64.Type}, {"UnidadeID", Int64.Type}, {"FornecedorID", Int64.Type}, {"Data", type date}, {"DataRecebimento", type date}, {"Status", type text}, {"Valor", type number}, {"DistanciaKm", type number}, {"LeadTimeDias", Int64.Type}})
+				in
+				  #"Tipo de coluna alterado"
+
+	annotation PBI_ResultType = Table
+

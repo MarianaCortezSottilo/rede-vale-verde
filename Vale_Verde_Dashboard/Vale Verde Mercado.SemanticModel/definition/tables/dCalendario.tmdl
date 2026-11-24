@@ -1,0 +1,156 @@
+table dCalendario
+	lineageTag: e8adc19c-82d9-41a4-8519-d7ef24888033
+	dataCategory: Time
+
+	/// Dia do calendário.
+	column Data
+		dataType: dateTime
+		isKey
+		formatString: Short Date
+		lineageTag: 5df30775-f4ba-4505-acdb-783959c14520
+		summarizeBy: none
+		sourceColumn: Data
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	/// Ano civil (2024 a 2026).
+	column Ano
+		dataType: int64
+		formatString: 0
+		lineageTag: 24d0c807-b452-46c9-8426-00f8dfcbf3ba
+		summarizeBy: none
+		sourceColumn: Ano
+
+		annotation SummarizationSetBy = User
+
+	/// Número do mês (1 a 12). Use para ordenar a coluna Mes.
+	column MesNum
+		dataType: int64
+		formatString: 0
+		lineageTag: b903add6-1d7d-4c76-8b55-61dca40e8885
+		summarizeBy: none
+		sourceColumn: MesNum
+
+		annotation SummarizationSetBy = User
+
+	/// Mês abreviado (jan, fev...). Ordenar por MesNum.
+	column Mes
+		dataType: string
+		lineageTag: f21479cb-8d06-45e9-9b07-00e924a59aea
+		summarizeBy: none
+		sourceColumn: Mes
+		sortByColumn: MesNum
+
+		changedProperty = SortByColumn
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Ano e mês no formato aaaa-mm; ordena corretamente em ordem alfabética.
+	column AnoMes
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: 7ce01dd1-5759-41b1-adea-8da0f6c45ea2
+		summarizeBy: none
+		sourceColumn: AnoMes
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	/// Rótulo curto para gráficos (nov/24). Ordenar por IndiceMes.
+	column MesAno
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: 208a2a9c-db6c-4a96-95a0-09cab1a3afd2
+		summarizeBy: none
+		sourceColumn: MesAno
+		sortByColumn: IndiceMes
+
+		changedProperty = SortByColumn
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	/// Ano e trimestre (2025 T1).
+	column Trimestre
+		dataType: string
+		lineageTag: 95d4a3d9-169e-42d2-8d66-02a13ce66010
+		summarizeBy: none
+		sourceColumn: Trimestre
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Dia da semana, 1 = segunda ... 7 = domingo. Use para ordenar DiaSemana.
+	column DiaSemanaNum
+		dataType: int64
+		formatString: 0
+		lineageTag: e9a9f586-37f3-4b6e-af8d-0962834661dc
+		summarizeBy: none
+		sourceColumn: DiaSemanaNum
+
+		annotation SummarizationSetBy = User
+
+	/// Dia da semana abreviado (seg, ter...). Ordenar por DiaSemanaNum.
+	column DiaSemana
+		dataType: string
+		lineageTag: 8d0a6d1d-ff8d-411d-ae88-dfbf592e52ab
+		summarizeBy: none
+		sourceColumn: DiaSemana
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Dia do mês (1 a 31).
+	column Dia
+		dataType: int64
+		formatString: 0
+		lineageTag: 59ffe070-1e21-4f79-ba54-87349b7175c0
+		summarizeBy: none
+		sourceColumn: Dia
+
+		annotation SummarizationSetBy = User
+
+	/// 1 se sábado ou domingo.
+	column FimDeSemana
+		dataType: int64
+		formatString: 0
+		lineageTag: 6bc5b739-b89c-4532-bad6-043cd3f13256
+		summarizeBy: none
+		sourceColumn: FimDeSemana
+
+		annotation SummarizationSetBy = User
+
+	/// 1 em 25/12 e 01/01, dias em que as lojas não abrem.
+	column LojaFechada
+		dataType: int64
+		formatString: 0
+		lineageTag: e5edaae5-514a-40c9-8c52-70151bb07173
+		summarizeBy: none
+		sourceColumn: LojaFechada
+
+		annotation SummarizationSetBy = User
+
+	/// Sequência dos meses desde nov/2024 (0, 1, 2...). Útil para ordenar e para tendência.
+	column IndiceMes
+		dataType: int64
+		formatString: 0
+		lineageTag: 6f2fa81b-d118-4ae4-84e8-1d2d0c5212a0
+		summarizeBy: none
+		sourceColumn: IndiceMes
+
+		annotation SummarizationSetBy = User
+
+	partition dCalendario = m
+		mode: import
+		source =
+				let
+				  Origem = Csv.Document(File.Contents("C:\Users\macor\OneDrive\Documentos\Vale Verde\mercado_vale_verde\powerbi\dados\dCalendario.csv"), [Delimiter = ";", Columns = 13, Encoding = 65001, QuoteStyle = QuoteStyle.None]),
+				  #"Cabeçalhos promovidos" = Table.PromoteHeaders(Origem, [PromoteAllScalars = true]),
+				  #"Tipo de coluna alterado" = Table.TransformColumnTypes(#"Cabeçalhos promovidos", {{"Data", type date}, {"Ano", Int64.Type}, {"MesNum", Int64.Type}, {"Mes", type text}, {"AnoMes", type date}, {"MesAno", type date}, {"Trimestre", type text}, {"DiaSemanaNum", Int64.Type}, {"DiaSemana", type text}, {"Dia", Int64.Type}, {"FimDeSemana", Int64.Type}, {"LojaFechada", Int64.Type}, {"IndiceMes", Int64.Type}})
+				in
+				  #"Tipo de coluna alterado"
+
+	annotation PBI_ResultType = Table
+

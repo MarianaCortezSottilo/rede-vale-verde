@@ -1,0 +1,21 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}
+{% block titulo %}Funcionários{% endblock %}
+{% block conteudo %}
+<div class="topo"><div><h1>Funcionários</h1><div class="sub">{{ un_rotulo }} · {{ n }} registros</div></div>
+  <form class="filtros">
+    <select name="situacao">{% for k, v in [('ativos','Ativos'),('desligados','Desligados'),('todos','Todos')] %}<option value="{{ k }}" {{ 'selected' if k==sit }}>{{ v }}</option>{% endfor %}</select>
+    <select name="departamento"><option value="">Todos os departamentos</option>{% for d in deps %}<option {{ 'selected' if d==dep }}>{{ d }}</option>{% endfor %}</select>
+    <button>Filtrar</button>{{ m.botao_excel() }}<a class="btn btn-primario" href="{{ url_for('rh.admitir') }}">+ Admitir</a></form></div>
+<div class="grade g2">
+<div class="cartao col2"><div class="rolagem"><table>
+  <tr><th>Unidade</th><th>Matrícula</th><th>Nome</th><th>Cargo</th><th>Departamento</th><th>Contrato</th><th>Turno</th><th>Admissão</th><th>Desligamento</th><th class="n">Salário atual</th></tr>
+  {% for f in t %}<tr><td>{{ f.unidade }}</td><td>{{ f.matricula }}</td><td><a href="{{ url_for('rh.funcionario', fid=f.id) }}">{{ f.nome }}</a></td><td>{{ f.cargo }}</td><td>{{ f.departamento }}</td>
+    <td>{{ f.tipo_contrato|replace('_',' ')|capitalize }}</td><td>{{ f.turno|capitalize }}</td><td>{{ f.data_admissao|data_br }}</td>
+    <td>{{ f.data_demissao|data_br if f.data_demissao else '' }}{% if f.motivo_desligamento %}<br><span class="muted">{{ f.motivo_desligamento }}</span>{% endif %}</td><td class="n">{{ f.salario_atual|brl }}</td></tr>{% endfor %}
+</table></div></div>
+{% if resumo|length > 1 %}<div class="cartao"><h3>Ativos por unidade</h3><table><tr><th>Unidade</th><th class="n">Ativos</th><th class="n">Salários (mês)</th></tr>
+  {% for r in resumo %}<tr><td>{{ r.unidade }}</td><td class="n">{{ r.ativos }}</td><td class="n">{{ r.folha_mensal|brl }}</td></tr>{% endfor %}</table></div>{% endif %}
+<div class="cartao"><h3>Quadro por cargo</h3><div class="rolagem" style="max-height:420px"><table><tr><th>Unidade</th><th>Departamento</th><th>Cargo</th><th class="n">Ocupadas</th></tr>
+  {% for r in quadro %}<tr><td>{{ r.unidade }}</td><td>{{ r.departamento }}</td><td>{{ r.cargo }}</td><td class="n">{{ r.ocupadas }}</td></tr>{% endfor %}</table></div></div>
+</div>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}
+{% block titulo %}DRE gerencial{% endblock %}
+{% block conteudo %}
+<div class="topo"><div><h1>DRE gerencial</h1>
+  <div class="sub"><b>{{ un_rotulo }}</b> · regime de competência. Na visão de rede/franqueadora, royalties e a margem dos CDs aparecem como receita da franqueadora e como custo das lojas (efeito líquido zero). IR/CSLL estimado (34% sobre lucro positivo da seleção).
+  Atalhos: <a href="?u=rede">rede</a> · <a href="?u=franqueadora">franqueadora</a> · <a href="?u=franquias">franqueadas</a> · <a href="?u=proprias">próprias</a></div></div>
+  {% set extra %}<label><input type="checkbox" name="av" value="1" {{ 'checked' if av }}> análise vertical (% da receita bruta)</label>{% endset %}
+  {{ m.filtro_periodo(ci, cf, extra) }}</div>
+<div class="grade g2">
+  <div class="cartao col2"><h3>EBITDA e lucro líquido por mês</h3><div class="grafico baixo"><canvas id="gRes"></canvas></div></div>
+</div>
+<div class="cartao mt"><div class="tabela-wrap"><table>
+  <tr><th style="min-width:280px">Linha</th>{% for c in cols %}<th class="n">{{ rotulo_mes(c) if c != 'Total' else 'Total' }}</th>{% endfor %}</tr>
+  {% for l in linhas %}
+  <tr class="{{ 'sub' if l.nivel == 2 else 'total' if l.nivel == 3 }}">
+    <td style="padding-left:{{ 8 + (14 if l.nivel == 1 else 0) }}px">{{ l.rotulo }}</td>
+    {% for c in cols %}{% set v = l.valores[c] %}
+      <td class="n {{ 'neg' if v < -0.005 and l.nivel != 1 }}">{% if av %}{{ l.av[c]|pct }}{% else %}{{ v|num(0) }}{% endif %}</td>{% endfor %}
+  </tr>{% endfor %}
+</table></div>
+<p class="muted">Valores em R$. Linhas "(-)" são deduções e aparecem negativas.</p></div>
+{% endblock %}
+{% block scripts %}<script>
+const g = {{ g|tojson }};
+VV.grafico('gRes', g.meses, [{nome: 'EBITDA', dados: g.ebitda, slot: 0}, {nome: 'Lucro líquido', dados: g.lucro, slot: 2}], {fmt: 'brl'});
+</script>{% endblock %}

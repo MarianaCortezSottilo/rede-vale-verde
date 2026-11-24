@@ -1,0 +1,119 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}
+{% block titulo %}Comparativo da rede{% endblock %}
+{% block head %}{% include '_leaflet.html' %}{% endblock %}
+{% block conteudo %}
+<div class="topo"><div><h1>Comparativo da rede</h1>
+  <div class="sub">Últimos 12 meses fechados ({{ rotulo_mes(u12[0]) }} a {{ rotulo_mes(u12[-1]) }}). Crescimento "mesmas lojas" considera só lojas com 12 meses completos nos dois anos.</div></div>
+  <div class="filtros">{{ m.botao_excel() }}</div></div>
+<div class="grade g6">
+  {{ m.kpi('Faturamento da rede', tot.receita|mil, tot.lojas ~ ' lojas em ' ~ tot.estados ~ ' estados') }}
+  {{ m.kpi('Crescimento mesmas lojas', tot.sss|pct(1, true), 'same-store sales, 12m vs 12m') }}
+  {{ m.kpi('Resultado das lojas (LAIR)', tot.lair|mil, (tot.lair / tot.receita)|pct(2) ~ ' do faturamento') }}
+  {{ m.kpi('Funcionários nas lojas', tot.funcionarios|num) }}
+  {% for r in modelo %}{{ m.kpi('Lojas ' ~ ('próprias' if r.modelo == 'PROPRIA' else 'franqueadas'), r.lojas, (r.receita|mil) ~ ' · LAIR ' ~ ((r.lair / r.receita)|pct(2))) }}{% endfor %}
+</div>
+
+<div class="cartao mt">
+  <div class="controles-mapa">
+    <b>Mapa de desempenho</b>
+    <label>Cor das lojas <select id="metrica">
+      <option value="margem_lair">Margem antes do IR</option><option value="crescimento">Crescimento mesmas lojas</option>
+      <option value="perdas_pct">Perdas (% faturamento)</option><option value="receita_m2_ano">Faturamento por m²/ano</option>
+      <option value="folha_pct">Custo de pessoal (% faturamento)</option></select></label>
+    <label>Estados <select id="camadaUf"><option value="receita">Faturamento 12m</option><option value="receita_per_capita">Faturamento por habitante</option><option value="">Sem preenchimento</option></select></label>
+    <label><input type="checkbox" id="rotas" checked> rotas CD → loja</label>
+    <span class="muted">Tamanho da bolha = faturamento · clique para detalhes</span>
+  </div>
+  <div id="mapa" class="mapa"></div>
+</div>
+
+<div class="grade g2 mt">
+  <div class="cartao"><h3>Faturamento 12 meses por loja</h3><div class="nota">Azul = própria · laranja = franqueada</div><div class="grafico alto"><canvas id="gRec"></canvas></div></div>
+  <div class="cartao"><h3>Margem antes do IR por loja</h3><div class="nota">Franqueadas pagam royalties e fundo; lojas novas ainda estão em maturação</div><div class="grafico alto"><canvas id="gLair"></canvas></div></div>
+</div>
+
+<div class="cartao mt"><h3>Ranking das lojas</h3><div class="tabela-wrap"><table>
+  <tr><th>Loja</th><th>Modelo</th><th>Região</th><th class="n">Meses</th><th class="n">Faturamento 12m</th><th class="n">Cresc.</th><th class="n">Ticket</th><th class="n">Margem bruta</th>
+      <th class="n">Perdas</th><th class="n">Pessoal</th><th class="n">LAIR</th><th class="n">Fat./m²/ano</th><th class="n">Func.</th><th class="n">Concor. ≤2km</th></tr>
+  {% for r in t %}<tr><td style="white-space:nowrap" title="{{ r.nome }}{% if r.franqueado %} · {{ r.franqueado }}{% endif %}"><a href="{{ url_for('rede.unidade', uid=r.id) }}">{{ r.codigo }}</a> {{ r.cidade }}</td>
+    <td><span class="etq {{ r.modelo }}">{{ 'Própria' if r.modelo == 'PROPRIA' else 'Franquia' }}</span></td><td>{{ r.regiao }}</td><td class="n">{{ r.meses_operacao|num }}</td>
+    <td class="n">{{ r.receita|mil }}</td><td class="n">{{ r.crescimento|pct(1, true) if r.crescimento is not none else 'nova' }}</td><td class="n">{{ r.ticket|brl }}</td>
+    <td class="n">{{ r.margem_bruta|pct }}</td><td class="n">{{ r.perdas_pct|pct(2) }}</td><td class="n">{{ r.folha_pct|pct }}</td>
+    <td class="n {{ 'neg' if r.margem_lair and r.margem_lair < 0 }}">{{ r.margem_lair|pct(2) }}</td><td class="n">{{ r.receita_m2_ano|brl(0) }}</td><td class="n">{{ r.funcionarios|num }}</td><td class="n">{{ r.concorrentes_2km|num }}</td></tr>{% endfor %}
+</table></div></div>
+
+<div class="grade g3 mt">
+  <div class="cartao"><h3>Por região</h3><table><tr><th>Região</th><th class="n">Lojas</th><th class="n">Faturamento</th><th class="n">LAIR</th><th class="n">Perdas</th></tr>
+    {% for r in reg %}<tr><td>{{ r.regiao }}</td><td class="n">{{ r.lojas }}</td><td class="n">{{ r.receita|mil }}</td><td class="n">{{ r.margem_lair|pct(2) }}</td><td class="n">{{ r.perdas_pct|pct(2) }}</td></tr>{% endfor %}</table></div>
+  <div class="cartao"><h3>Por estado</h3><table><tr><th>UF</th><th class="n">Lojas</th><th class="n">Faturamento</th><th class="n">R$/habitante</th></tr>
+    {% for r in uf|sort(attribute='receita', reverse=true) %}<tr><td>{{ r.uf }}</td><td class="n">{{ r.lojas }}</td><td class="n">{{ r.receita|mil }}</td><td class="n">{{ r.receita_per_capita|brl }}</td></tr>{% endfor %}</table></div>
+  <div class="cartao"><h3>Centros de distribuição</h3><table><tr><th>CD</th><th class="n">Lojas</th><th class="n">Transferido</th><th class="n">Margem</th><th class="n">Frete</th></tr>
+    {% for r in cds %}<tr><td><a href="{{ url_for('rede.unidade', uid=r.id) }}">{{ r.codigo }}</a> {{ r.cidade }}</td><td class="n">{{ r.lojas|num }}</td><td class="n">{{ r.transferido|mil }}</td><td class="n">{{ r.margem|mil }}</td><td class="n">{{ r.frete|mil }}</td></tr>{% endfor %}</table>
+    <p class="mt"><a href="{{ url_for('rede.mapa_logistica') }}">Ver mapa de logística ›</a></p></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const lojas = {{ pontos|tojson }}, cds = {{ cd_pts|tojson }}, sede = {{ sede|tojson }}, ufDados = {{ uf_dados|tojson }}, UF_IBGE = {{ UF_IBGE|tojson }};
+const g = {{ g|tojson }};
+VV.grafico('gRec', g.nomes, [{nome: 'Faturamento', dados: g.receita, cores: g.modelo.map(x => x === 'PROPRIA' ? VV.cores[0] : VV.cores[1])}], {fmt: 'brl', horizontal: true, legenda: false});
+VV.grafico('gLair', g.nomes, [{nome: 'Margem antes do IR', dados: g.lair, cores: g.lair.map((x, i) => x < 0 ? VV.status.critico : (g.modelo[i] === 'PROPRIA' ? VV.cores[0] : VV.cores[1]))}], {fmt: 'pct', horizontal: true, legenda: false, min: Math.min(0, ...g.lair)});
+
+const mapa = VVMapa.criar('mapa');
+if (mapa) {
+  const camLojas = L.layerGroup().addTo(mapa), camRotas = L.layerGroup().addTo(mapa);
+  let camUf = null, legLojas = null, legUf = null;
+  const vmax = Math.max(...lojas.map(l => l.receita || 0));
+  const rot = {margem_lair: 'Margem antes do IR', crescimento: 'Crescimento mesmas lojas', perdas_pct: 'Perdas', receita_m2_ano: 'Faturamento por m²/ano', folha_pct: 'Pessoal / faturamento'};
+  const fmt = (k, v) => v == null ? '–' : (k === 'receita_m2_ano' ? VV.brl(v) : VV.fmtNum(1).format(v * 100) + '%');
+  function desenharLojas() {
+    camLojas.clearLayers();
+    const k = document.getElementById('metrica').value;
+    const vals = lojas.map(l => l[k]);
+    const inverso = (k === 'perdas_pct' || k === 'folha_pct');
+    const med = [...vals.filter(v => v != null)].sort((a, b) => a - b)[Math.floor(vals.filter(v => v != null).length / 2)];
+    const meio = (k === 'margem_lair' || k === 'crescimento') ? 0 : med;
+    const esc = VVMapa.escalaDiv(Math.min(...vals.filter(v => v != null)), meio, Math.max(...vals.filter(v => v != null)));
+    lojas.forEach(l => {
+      let v = l[k]; const cor = v == null ? '#e1e0d9' : esc(inverso ? 2 * meio - v : v);
+      L.circleMarker([l.lat, l.lon], {radius: VVMapa.raioBolha(l.receita, vmax, 8, 32), color: '#fcfcfb', weight: 2, fillColor: cor, fillOpacity: .9})
+        .bindPopup(`<b>${l.codigo} · ${l.nome}</b><br>${l.cidade}/${l.uf} · ${l.modelo === 'PROPRIA' ? 'loja própria' : 'franquia ' + (l.franqueado || '')}<br>
+          Faturamento 12m: <b>${VV.compacto(l.receita)}</b> (${VV.compacto(l.receita_mensal)}/mês)<br>
+          Crescimento: ${l.crescimento == null ? 'loja nova' : fmt('crescimento', l.crescimento)} · Ticket: ${VV.brl(l.ticket)}<br>
+          Margem bruta ${fmt('x', l.margem_bruta)} · Perdas ${fmt('x', l.perdas_pct)} · LAIR ${fmt('x', l.margem_lair)}<br>
+          ${l.funcionarios} funcionários · ${VV.fmtNum(0).format(l.clientes)} clientes fidelidade · CD ${l.cd_codigo}<br>
+          <a href="/unidades/${l.id}">ficha da unidade</a> · <a href="/mapas/clientes?loja=${l.id}">área de influência</a>`)
+        .bindTooltip(`${l.codigo} ${l.cidade}: ${rot[k]} ${fmt(k, v)}`).addTo(camLojas);
+    });
+    if (legLojas) legLojas.remove();
+    legLojas = VVMapa.legenda(mapa, `<b>${rot[k]}</b><br><i style="background:#1c5cab"></i>${inverso ? 'melhor (menor)' : 'melhor'}<br><i style="background:#cde2fb"></i>${k === 'margem_lair' || k === 'crescimento' ? 'positivo, perto de zero' : 'perto da mediana'}<br><i style="background:#d03b3b"></i>${inverso ? 'pior (maior)' : (k === 'margem_lair' || k === 'crescimento' ? 'negativo' : 'abaixo da mediana')}<br>
+      <i style="background:${VVMapa.cores.cd}" class="q"></i>CD &nbsp; <i style="background:${VVMapa.cores.sede}" class="q"></i>Sede`);
+  }
+  cds.forEach(c => L.marker([c.lat, c.lon], {icon: L.divIcon({className: '', html: `<div style="background:${VVMapa.cores.cd};color:#fff;font:600 11px system-ui;padding:3px 5px;border-radius:4px;border:2px solid #fff;white-space:nowrap">${c.codigo}</div>`})})
+    .bindPopup(`<b>${c.codigo} · ${c.nome}</b><br>${c.cidade}<br>Atende ${c.lojas || 0} lojas · transferido 12m ${VV.compacto(c.transferido)}<br>Margem de distribuição ${VV.compacto(c.margem)} · frete ${VV.compacto(c.frete)}`).addTo(mapa));
+  sede.forEach(s => L.marker([s.lat, s.lon], {icon: L.divIcon({className: '', html: `<div style="background:${VVMapa.cores.sede};color:#fff;font:600 11px system-ui;padding:3px 5px;border-radius:4px;border:2px solid #fff">SEDE</div>`})}).bindPopup(`<b>${s.nome}</b><br>${s.cidade}`).addTo(mapa));
+  lojas.forEach(l => { const c = cds.find(x => x.codigo === l.cd_codigo); if (c) L.polyline([[c.lat, c.lon], [l.lat, l.lon]], {color: VVMapa.cores.cd, weight: 1.5, opacity: .6, dashArray: '4 4'}).addTo(camRotas); });
+  document.getElementById('rotas').onchange = e => e.target.checked ? camRotas.addTo(mapa) : camRotas.remove();
+  document.getElementById('metrica').onchange = desenharLojas;
+  desenharLojas();
+  function desenharUf() {
+    const k = document.getElementById('camadaUf').value;
+    if (camUf) { camUf.remove(); camUf = null; } if (legUf) { legUf.remove(); legUf = null; }
+    if (!k) return;
+    VVMapa.estados(gj => {
+      if (!gj) { legUf = VVMapa.legenda(mapa, 'Contornos dos estados indisponíveis (API do IBGE fora do ar ou sem internet).', 'topright'); return; }
+      const vals = Object.values(ufDados).map(r => r[k]);
+      const esc = VVMapa.escalaSeq(vals, ['#e9f2fd', '#b7d3f6', '#6da7ec', '#256abf']);
+      camUf = L.geoJSON(gj, {style: f => { const uf = UF_IBGE[String(f.properties.codarea)]; const r = ufDados[uf];
+        return {color: '#fcfcfb', weight: 1, fillColor: r ? esc(r[k]) : '#f1f0ec', fillOpacity: r ? .55 : .35}; },
+        onEachFeature: (f, lyr) => { const uf = UF_IBGE[String(f.properties.codarea)]; const r = ufDados[uf];
+          lyr.bindTooltip(r ? `${uf}: ${r.lojas} loja(s) · ${VV.compacto(r.receita)} · ${VV.brl(r.receita_per_capita)}/hab.` : `${uf}: sem lojas`); }}).addTo(mapa);
+      camUf.bringToBack();
+      legUf = VVMapa.legenda(mapa, `<b>${k === 'receita' ? 'Faturamento 12m' : 'Faturamento por habitante'} (estado)</b><br>${['#e9f2fd', '#b7d3f6', '#6da7ec', '#256abf'].map((c, i) => `<i class="q" style="background:${c}"></i>${i === 0 ? 'menor' : i === 3 ? 'maior' : ''}`).join('<br>')}<br><i class="q" style="background:#f1f0ec"></i>sem loja`, 'topright');
+    });
+  }
+  document.getElementById('camadaUf').onchange = desenharUf;
+  desenharUf();
+}
+</script>
+{% endblock %}

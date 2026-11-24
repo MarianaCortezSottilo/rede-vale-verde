@@ -1,0 +1,19 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}
+{% block titulo %}Contas a pagar{% endblock %}
+{% block conteudo %}
+<div class="topo"><div><h1>Contas a pagar</h1><div class="sub">{{ un_rotulo }} · data de referência dos dados: {{ ref|data_br }}</div></div>
+  <form class="filtros">
+    <select name="status"><option value="ABERTO" {{ 'selected' if st=='ABERTO' }}>Em aberto</option><option value="PAGO" {{ 'selected' if st=='PAGO' }}>Pagas (últimas 500)</option><option value="" {{ 'selected' if st=='' }}>Todas</option></select>
+    <select name="origem"><option value="">Todas as origens</option>{% for o in ['COMPRA','TRANSFERENCIA','DESPESA','FRANQUIA','FOLHA','ENCARGOS','IMPOSTOS'] %}<option {{ 'selected' if o==origem }}>{{ o }}</option>{% endfor %}</select>
+    <button>Filtrar</button>{{ m.botao_excel() }}</form></div>
+<div class="grade g6">{% for a in aging %}{{ m.kpi(a.faixa, a.valor|mil, a.titulos ~ ' títulos') }}{% endfor %}</div>
+<div class="cartao mt"><div class="rolagem"><table>
+  <tr><th>Unidade</th><th>Origem</th><th>Referência</th><th>Favorecido</th><th>Competência</th><th>Vencimento</th><th class="n">Valor</th><th>Pagamento</th><th>Status</th><th></th></tr>
+  {% for c in linhas %}<tr><td>{{ c.unidade }}</td><td>{{ c.origem|capitalize }}</td>
+    <td>{% if c.origem == 'COMPRA' %}<a href="{{ url_for('com.pedido', pid=c.referencia[3:]|int) }}">{{ c.referencia }}</a>{% elif c.origem == 'TRANSFERENCIA' %}<a href="{{ url_for('com.transferencia', tid=c.referencia[3:]|int) }}">{{ c.referencia }}</a>{% else %}{{ c.referencia }}{% endif %}</td>
+    <td>{{ c.favorecido }}</td><td>{{ c.competencia or '' }}</td>
+    <td>{{ c.data_vencimento|data_br }}{% if c.status == 'ABERTO' and c.data_vencimento < ref %} <span class="etq erro">vencido</span>{% endif %}</td>
+    <td class="n">{{ c.valor|brl }}</td><td>{{ c.data_pagamento|data_br }}</td><td>{{ m.status_titulo(c.status) }}</td>
+    <td>{% if c.status == 'ABERTO' %}<form method="post" action="{{ url_for('fin.pagar', cid=c.id) }}" style="display:flex;gap:4px"><input type="date" name="data" value="{{ c.data_vencimento }}"><button class="btn-peq">Pagar</button></form>{% endif %}</td></tr>{% endfor %}
+</table></div></div>
+{% endblock %}

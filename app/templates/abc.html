@@ -1,0 +1,33 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}
+{% block titulo %}Curva ABC{% endblock %}
+{% block conteudo %}
+<div class="topo">
+  <div><h1>Curva ABC de produtos</h1><div class="sub">Classificação pelo faturamento acumulado: A até 80%, B até 95%, C o restante</div></div>
+  {{ m.filtro_periodo(ci, cf) }}
+</div>
+<div class="grade g3">
+  {% for r in resumo %}
+  <div class="cartao kpi"><div class="rot"><span class="etq {{ r.classe }}">Classe {{ r.classe }}</span></div>
+    <div class="val">{{ r.produtos }} produtos</div>
+    <div class="det">{{ r.pct_produtos|pct }} do mix geram {{ r.pct_receita|pct }} do faturamento ({{ r.receita|mil }})</div></div>
+  {% endfor %}
+</div>
+<div class="grade g2 mt">
+  <div class="cartao">
+    <h3>Curva de Pareto</h3><div class="nota">% acumulado do faturamento × nº de produtos ordenados</div>
+    <div class="grafico"><canvas id="gAbc"></canvas></div>
+  </div>
+  <div class="cartao">
+    <h3>Ranking</h3>
+    <div class="rolagem"><table>
+      <tr><th>#</th><th>Produto</th><th>Classe</th><th class="n">Faturamento</th><th class="n">% acum.</th><th class="n">Margem</th></tr>
+      {% for r in t %}<tr><td>{{ loop.index }}</td><td>{% if un_unica %}<a href="{{ url_for('com.produto_estoque', uid=un_unica, pid=r.id) }}">{{ r.descricao }}</a>{% else %}{{ r.descricao }}{% endif %}<br><span class="muted">{{ r.categoria }}</span></td>
+      <td><span class="etq {{ r.classe }}">{{ r.classe }}</span></td><td class="n">{{ r.receita|brl }}</td><td class="n">{{ r.pct_acum|pct }}</td><td class="n">{{ r.margem|pct }}</td></tr>{% endfor %}
+    </table></div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script>
+const g = {{ g|tojson }};
+VV.grafico('gAbc', g.x, [{nome: '% acumulado', dados: g.y, slot: 0, preencher: true, fundo: 'rgba(42,120,214,.12)'}], {tipo: 'line', fmt: 'pct', legenda: false});
+</script>{% endblock %}

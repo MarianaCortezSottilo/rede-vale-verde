@@ -1,0 +1,134 @@
+table fFolha
+	lineageTag: 9e848b17-36a5-4fcc-a1e2-3d53e5c23c09
+
+	/// Competência (1º dia do mês).
+	column Data
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: e6c45000-3475-49ad-bb8d-61bc94c4d260
+		summarizeBy: none
+		sourceColumn: Data
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	/// Unidade onde o funcionário trabalha.
+	column UnidadeID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: c07d25a3-7f8a-4491-88d9-cad4799e4d2f
+		summarizeBy: none
+		sourceColumn: UnidadeID
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Cargo.
+	column Cargo
+		dataType: string
+		lineageTag: 53a33517-fc8c-4d0e-9868-f49a1e4d29a1
+		summarizeBy: none
+		sourceColumn: Cargo
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Setor (Frente de Caixa, Açougue, Logística (CD), Franqueadora (Sede)...).
+	column Departamento
+		dataType: string
+		lineageTag: c6d66b47-5bf9-4a54-b2c9-59fd3ea03648
+		summarizeBy: none
+		sourceColumn: Departamento
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Funcionários pagos no mês nesse cargo (headcount).
+	column Funcionarios
+		dataType: int64
+		formatString: 0
+		lineageTag: 5720e762-152b-4a66-b95f-df5d3a501a92
+		summarizeBy: sum
+		sourceColumn: Funcionarios
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Salários brutos, em R$.
+	column SalarioBruto
+		dataType: double
+		lineageTag: d7da46e9-4ab6-49da-9cb8-f0b789068527
+		summarizeBy: sum
+		sourceColumn: SalarioBruto
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// Horas extras com reflexo no DSR, em R$.
+	column HorasExtras
+		dataType: double
+		lineageTag: f2180d54-4962-42a1-a1cf-e61caf2dd77d
+		summarizeBy: sum
+		sourceColumn: HorasExtras
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// INSS patronal e FGTS, em R$.
+	column Encargos
+		dataType: double
+		lineageTag: 0843334e-bd90-449f-9c10-ef9a7db82c1f
+		summarizeBy: sum
+		sourceColumn: Encargos
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// Vale-alimentação e vale-transporte (líquido do desconto do funcionário), em R$.
+	column Beneficios
+		dataType: double
+		lineageTag: df73e335-5f80-42bc-acd8-e3c513414f88
+		summarizeBy: sum
+		sourceColumn: Beneficios
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// Provisões de 13º e férias com encargos, em R$.
+	column Provisoes
+		dataType: double
+		lineageTag: e9a4f241-7083-46f4-8d81-0f6cef8d6708
+		summarizeBy: sum
+		sourceColumn: Provisoes
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// Custo total para a empresa, em R$ (soma das colunas de custo).
+	column CustoTotal
+		dataType: double
+		lineageTag: 235cb501-517c-4b04-87b6-fa9bbe139e4f
+		summarizeBy: sum
+		sourceColumn: CustoTotal
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition fFolha = m
+		mode: import
+		source =
+				let
+				  Origem = Csv.Document(File.Contents("C:\Users\macor\OneDrive\Documentos\Vale Verde\mercado_vale_verde\powerbi\dados\fFolha.csv"), [Delimiter = ";", Columns = 11, Encoding = 65001, QuoteStyle = QuoteStyle.None]),
+				  #"Cabeçalhos promovidos" = Table.PromoteHeaders(Origem, [PromoteAllScalars = true]),
+				  #"Tipo de coluna alterado" = Table.TransformColumnTypes(#"Cabeçalhos promovidos", {{"Data", type date}, {"UnidadeID", Int64.Type}, {"Cargo", type text}, {"Departamento", type text}, {"Funcionarios", Int64.Type}, {"SalarioBruto", type number}, {"HorasExtras", type number}, {"Encargos", type number}, {"Beneficios", type number}, {"Provisoes", type number}, {"CustoTotal", type number}})
+				in
+				  #"Tipo de coluna alterado"
+
+	annotation PBI_ResultType = Table
+

@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 656" font-family="Segoe UI,system-ui,sans-serif" font-size="15"><rect width="1280" height="656" fill="#fff"/>
+<text x="40" y="70" fill="#4f4e4a" font-size="13" font-weight="600" text-anchor="start" letter-spacing=".04em">FACT</text>
+<text x="365" y="70" fill="#4f4e4a" font-size="13" font-weight="600" text-anchor="middle" letter-spacing=".04em">CALENDAR</text>
+<text x="470" y="70" fill="#4f4e4a" font-size="13" font-weight="600" text-anchor="middle" letter-spacing=".04em">UNIT</text>
+<text x="575" y="70" fill="#4f4e4a" font-size="13" font-weight="600" text-anchor="middle" letter-spacing=".04em">PRODUCT</text>
+<text x="680" y="70" fill="#4f4e4a" font-size="13" font-weight="600" text-anchor="middle" letter-spacing=".04em">SUPPLIER</text>
+<text x="760" y="70" fill="#4f4e4a" font-size="13" font-weight="600" text-anchor="start" letter-spacing=".04em">GRAIN (ONE ROW =)</text>
+<text x="1240" y="70" fill="#4f4e4a" font-size="13" font-weight="600" text-anchor="end" letter-spacing=".04em">ROWS</text>
+<line x1="40" x2="1240" y1="84" y2="84" stroke="#121212" stroke-width="1.5"/>
+<rect x="40" y="86" width="1200" height="36" fill="#f7f6f2"/>
+<rect x="40" y="94" width="4" height="20" fill="#2A78D6"/>
+<text x="54" y="108" fill="#121212" font-weight="600">fCupons</text>
+<text x="222" y="108" fill="#2A78D6" font-size="12">Sales</text>
+<circle cx="365" cy="103" r="7" fill="#1F6B45"/>
+<circle cx="470" cy="103" r="7" fill="#1F6B45"/>
+<text x="760" y="108" fill="#4f4e4a">day × unit × payment method</text>
+<text x="1240" y="108" fill="#121212" text-anchor="end" font-family="ui-monospace,Consolas,monospace" font-size="14">31,570</text>
+<rect x="40" y="130" width="4" height="20" fill="#2A78D6"/>
+<text x="54" y="144" fill="#121212" font-weight="600">fVendas</text>
+<text x="222" y="144" fill="#2A78D6" font-size="12">Sales</text>
+<circle cx="365" cy="139" r="7" fill="#1F6B45"/>
+<circle cx="470" cy="139" r="7" fill="#1F6B45"/>
+<circle cx="575" cy="139" r="7" fill="#1F6B45"/>
+<text x="760" y="144" fill="#4f4e4a">day × unit × product</text>
+<text x="1240" y="144" fill="#121212" text-anchor="end" font-family="ui-monospace,Consolas,monospace" font-size="14">1,409,868</text>
+<rect x="40" y="158" width="1200" height="36" fill="#f7f6f2"/>
+<rect x="40" y="166" width="4" height="20" fill="#2A78D6"/>
+<text x="54" y="180" fill="#121212" font-weight="600">fRupturas</text>
+<text x="222" y="180" fill="#2A78D6" font-size="12">Sales</text>
+<circle cx="365" cy="175" r="7" fill="#1F6B45"/>
+<circle cx="470" cy="175" r="7" fill="#1F6B45"/>
+<circle cx="575" cy="175" r="7" fill="#1F6B45"/>
+<text x="760" y="180" fill="#4f4e4a">day × unit × out-of-stock product</text>
+<text x="1240" y="180" fill="#121212" text-anchor="end" font-family="ui-monospace,Consolas,monospace" font-size="14">388</text>
+<rect x="40" y="202" width="4" height="20" fill="#EB6834"/>
+<text x="54" y="216" fill="#121212" font-weight="600">fCompras</text>
+<text x="222" y="216" fill="#EB6834" font-size="12">Supply</text>
+<circle cx="365" cy="211" r="7" fill="#1F6B45"/>
+<circle cx="470" cy="211" r="7" fill="#1F6B45"/>
+<circle cx="680" cy="211" r="7" fill="#1F6B45"/>
+<text x="760" y="216" fill="#4f4e4a">purchase order</text>
+<text x="1240" y="216" fill="#121212" text-anchor="end" font-family="ui-monospace,Consolas,monospace" font-size="14">23,876</text>
+<rect x="40" y="230" width="1200" height="36" fill="#f7f6f2"/>
+<rect x="40" y="238" width="4" height="20" fill="#EB6834"/>
+<text x="54" y="252" fill="#121212" font-weight="600">fTransferencias</text>
+<text x="222" y="252" fill="#EB6834" font-size="12">Supply</text>
+<circle cx="365" cy="247" r="7" fill="#1F6B45"/>
+<circle cx="460" cy="247" r="7" fill="#1F6B45"/><circle cx="480" cy="247" r="6" fill="#fff" stroke="#1F6B45" stroke-width="2"/>
+<text x="760" y="252" fill="#4f4e4a">DC → store transfer</text>
+<text x="1240" y="252" fill="#121212" text-anchor="end" font-family="ui-monospace,Consolas,monospace" font-size="14">2,182</text>
+<rect x="40" y="274" width="4" height="20" fill="#EB6834"/>
+<text x="54" y="288" fill="#121212" font-weight="600">fEstoque</text>
+<text x="222" y="288" fill="#EB6834" font-size="12">Supply</text>
+<circle cx="470" cy="283" r="7" fill="#1F6B45"/>
+<circle cx="575" cy="283" r="7" fill="#1F6B45"/>
+<text x="760" y="288" fill="#4f4e4a">current snapshot: unit × product</text>
+<text x="1240" y="288" fill="#121212" text-anchor="end" font-family="ui-monospace,Consolas,monospace" font-size="14">2,768</text>
+<rect x="40" y="302" width="1200" height="36" fill="#f7f6f2"/>
+<rect x="40" y="310" width="4" height="20" fill="#EB6834"/>
+<text x="54" y="324" fill="#121212" font-weight="600">fPerdas</text>
+<text x="222" y="324" fill="#EB6834" font-size="12">Supply</text>
+<circle cx="365" cy="319" r="7" fill="#1F6B45"/>
+<circle cx="470" cy="319" r="7" fill="#1F6B45"/>
+<circle cx="575" cy="319" r="7" fill="#1F6B45"/>
+<text x="760" y="324" fill="#4f4e4a">shrinkage event</text>
+<text x="1240" y="324" fill="#121212" text-anchor="end" font-family="ui-monospace,Consolas,monospace" font-size="14">217,955</text>
+<rect x="40" y="346" width="4" height="20" fill="#1F6B45"/>
+<text x="54" y="360" fill="#121212" font-weight="600">fDRE</text>
+<text x="222" y="360" fill="#1F6B45" font-size="12">Finance</text>
+<circle cx="365" cy="355" r="7" fill="#1F6B45"/>
+<circle cx="470" cy="355" r="7" fill="#1F6B45"/>
+<text x="760" y="360" fill="#4f4e4a">month × unit × P&amp;L line</text>
+<text x="1240" y="360" fill="#121212" text-anchor="end" font-family="ui-monospace,Consolas,monospace" font-size="14">5,910</text>
+<rect x="40" y="374" width="1200" height="36" fill="#f7f6f2"/>
+<rect x="40" y="382" width="4" height="20" fill="#1F6B45"/>
+<text x="54" y="396" fill="#121212" font-weight="600">fDespesas</text>
+<text x="222" y="396" fill="#1F6B45" font-size="12">Finance</text>
+<circle cx="365" cy="391" r="7" fill="#1F6B45"/>
+<circle cx="470" cy="391" r="7" fill="#1F6B45"/>
+<text x="760" y="396" fill="#4f4e4a">month × unit × expense</text>
+<text x="1240" y="396" fill="#121212" text-anchor="end" font-family="ui-monospace,Consolas,monospace" font-size="14">5,812</text>
+<rect x="40" y="418" width="4" height="20" fill="#1F6B45"/>
+<text x="54" y="432" fill="#121212" font-weight="600">fReceitasFranquia</text>
+<text x="222" y="432" fill="#1F6B45" font-size="12">Finance</text>
+<circle cx="365" cy="427" r="7" fill="#1F6B45"/>
+<circle cx="470" cy="427" r="7" fill="#1F6B45"/>
+<text x="760" y="432" fill="#4f4e4a">month × franchise × fee type</text>
+<text x="1240" y="432" fill="#121212" text-anchor="end" font-family="ui-monospace,Consolas,monospace" font-size="14">236</text>
+<rect x="40" y="446" width="1200" height="36" fill="#f7f6f2"/>
+<rect x="40" y="454" width="4" height="20" fill="#1F6B45"/>
+<text x="54" y="468" fill="#121212" font-weight="600">fCaixa</text>
+<text x="222" y="468" fill="#1F6B45" font-size="12">Finance</text>
+<circle cx="365" cy="463" r="7" fill="#1F6B45"/>
+<circle cx="470" cy="463" r="7" fill="#1F6B45"/>
+<text x="760" y="468" fill="#4f4e4a">month × unit × cash category</text>
+<text x="1240" y="468" fill="#121212" text-anchor="end" font-family="ui-monospace,Consolas,monospace" font-size="14">1,956</text>
+<rect x="40" y="490" width="4" height="20" fill="#1F6B45"/>
+<text x="54" y="504" fill="#121212" font-weight="600">fCaixaProjetado</text>
+<text x="222" y="504" fill="#1F6B45" font-size="12">Finance</text>
+<circle cx="365" cy="499" r="7" fill="#1F6B45"/>
+<circle cx="470" cy="499" r="7" fill="#1F6B45"/>
+<text x="760" y="504" fill="#4f4e4a">day × unit (next 60 days)</text>
+<text x="1240" y="504" fill="#121212" text-anchor="end" font-family="ui-monospace,Consolas,monospace" font-size="14">840</text>
+<rect x="40" y="518" width="1200" height="36" fill="#f7f6f2"/>
+<rect x="40" y="526" width="4" height="20" fill="#1F6B45"/>
+<text x="54" y="540" fill="#121212" font-weight="600">fContasPagar</text>
+<text x="222" y="540" fill="#1F6B45" font-size="12">Finance</text>
+<circle cx="470" cy="535" r="7" fill="#1F6B45"/>
+<text x="760" y="540" fill="#4f4e4a">payable</text>
+<text x="1240" y="540" fill="#121212" text-anchor="end" font-family="ui-monospace,Consolas,monospace" font-size="14">5,551</text>
+<rect x="40" y="562" width="4" height="20" fill="#7A5AA6"/>
+<text x="54" y="576" fill="#121212" font-weight="600">fFolha</text>
+<text x="222" y="576" fill="#7A5AA6" font-size="12">People</text>
+<circle cx="365" cy="571" r="7" fill="#1F6B45"/>
+<circle cx="470" cy="571" r="7" fill="#1F6B45"/>
+<text x="760" y="576" fill="#4f4e4a">month × unit × role</text>
+<text x="1240" y="576" fill="#121212" text-anchor="end" font-family="ui-monospace,Consolas,monospace" font-size="14">5,028</text>
+<text x="40" y="634" fill="#8a8882" font-size="13">● active relationship   ○ inactive (origin DC, enabled with USERELATIONSHIP)   ·   dUnidade → dCidade · dCliente → dUnidade</text></svg>

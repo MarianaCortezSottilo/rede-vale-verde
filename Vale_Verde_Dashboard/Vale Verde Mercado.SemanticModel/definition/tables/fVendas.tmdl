@@ -1,0 +1,86 @@
+table fVendas
+	lineageTag: 9ded2539-3db5-4762-937f-593fe2640573
+
+	/// Loja que vendeu.
+	column UnidadeID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 383c583f-0bd6-48b4-b995-ff2daad72f48
+		summarizeBy: none
+		sourceColumn: UnidadeID
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Dia da venda.
+	column Data
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 4c9d32df-b0cf-413e-983c-e423e17a48f3
+		summarizeBy: none
+		sourceColumn: Data
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	/// Produto vendido.
+	column ProdutoID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 7a74f8da-0586-4c9c-81b7-cc94eaf65bff
+		summarizeBy: none
+		sourceColumn: ProdutoID
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Quantidade vendida na unidade de medida do produto (UN, KG...).
+	column Quantidade
+		dataType: double
+		lineageTag: c287d849-abaa-4c01-8c7e-a0755dd02943
+		summarizeBy: sum
+		sourceColumn: Quantidade
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// Valor vendido, em R$ (preço praticado × quantidade).
+	column Receita
+		dataType: double
+		lineageTag: 921351ea-f83d-49ae-9576-201d69a3f8bd
+		summarizeBy: sum
+		sourceColumn: Receita
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// Custo da mercadoria vendida, em R$, pelo custo médio ponderado do estoque.
+	column CMV
+		dataType: double
+		lineageTag: fa3a7196-3e2e-4103-bee8-43590b11f359
+		summarizeBy: sum
+		sourceColumn: CMV
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition fVendas = m
+		mode: import
+		source =
+				let
+				  Origem = Csv.Document(File.Contents("C:\Users\macor\OneDrive\Documentos\Vale Verde\mercado_vale_verde\powerbi\dados\fVendas.csv"), [Delimiter = ";", Columns = 6, Encoding = 65001, QuoteStyle = QuoteStyle.None]),
+				  #"Cabeçalhos promovidos" = Table.PromoteHeaders(Origem, [PromoteAllScalars = true]),
+				  #"Tipo de coluna alterado" = Table.TransformColumnTypes(#"Cabeçalhos promovidos", {{"UnidadeID", Int64.Type}, {"Data", type date}, {"ProdutoID", Int64.Type}, {"Quantidade", type number}, {"Receita", type number}, {"CMV", type number}})
+				in
+				  #"Tipo de coluna alterado"
+
+	annotation PBI_ResultType = Table
+

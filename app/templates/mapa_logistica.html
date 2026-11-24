@@ -1,0 +1,94 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}
+{% block titulo %}Logística{% endblock %}
+{% block head %}{% include '_leaflet.html' %}{% endblock %}
+{% block conteudo %}
+<div class="topo"><div><h1>Logística: CDs, rotas e fornecedores</h1>
+  <div class="sub">Últimos 12 meses ({{ rotulo_mes(u12[0]) }} a {{ rotulo_mes(u12[-1]) }}). Frete por viagem = R$ {{ par.fixo|num }} + R$ {{ par.km|num(2) }}/km; até {{ par.cap|mil }} de mercadoria por viagem; distância rodoviária = linha reta × {{ par.estrada|num(2) }}.</div></div>
+  <div class="filtros">{{ m.botao_excel() }}</div></div>
+<div class="grade g4">
+  {{ m.kpi('Transferido CD → lojas', valor_tot|mil) }}
+  {{ m.kpi('Frete de transferência', frete_tot|mil, (frete_tot / valor_tot)|pct(2) ~ ' do valor transferido') }}
+  {{ m.kpi('Rota mais cara', (rotas|sort(attribute='frete_pct_valor', reverse=true)|first).loja if rotas else '–', ((rotas|sort(attribute='frete_pct_valor', reverse=true)|first).frete_pct_valor|pct(2) ~ ' do valor') if rotas else '') }}
+  {{ m.kpi('Fornecedores', forn|length, (forn|selectattr('abrangencia', 'equalto', 'NACIONAL')|list|length) ~ ' nacionais (abastecem CDs) · ' ~ (forn|selectattr('abrangencia', 'equalto', 'REGIONAL')|list|length) ~ ' regionais (perecíveis)') }}
+</div>
+<div class="cartao mt">
+  <div class="controles-mapa">
+    <label><input type="checkbox" id="cRotas" checked> rotas CD → loja (espessura = valor, cor = frete/valor)</label>
+    <label><input type="checkbox" id="cNac"> fornecedores nacionais → CDs</label>
+    <label><input type="checkbox" id="cReg"> fornecedores regionais → lojas</label>
+  </div>
+  <div id="mapa" class="mapa"></div>
+</div>
+<div class="grade g2 mt">
+  <div class="cartao col2"><h3>Rotas CD → loja</h3><div class="tabela-wrap"><table>
+    <tr><th>CD</th><th>Loja</th><th class="n">Distância</th><th>Dias de pedido</th><th class="n">Lead time</th><th class="n">Envios</th><th class="n">Viagens</th><th class="n">Valor transferido</th>
+        <th class="n">Frete</th><th class="n">Frete/valor</th><th class="n">Frete/faturamento loja</th><th class="n">R$/viagem</th><th class="n">% parciais</th></tr>
+    {% for r in rotas %}<tr><td>{{ r.cd }}</td><td>{{ r.loja }} <span class="muted">{{ r.loja_nome }}</span></td><td class="n">{{ r.km|num }} km</td><td>{{ r.dias_pedido_cd|replace(',', ', ')|lower }}</td>
+      <td class="n">{{ r.lead_real|num(1) }} d</td><td class="n">{{ r.envios }}</td><td class="n">{{ r.viagens }}</td><td class="n">{{ r.valor|mil }}</td><td class="n">{{ r.frete|mil }}</td>
+      <td class="n">{{ r.frete_pct_valor|pct(2) }}</td><td class="n">{{ r.frete_pct_receita|pct(2) }}</td><td class="n">{{ r.custo_por_viagem|brl(0) }}</td><td class="n">{{ r.pct_parcial|pct }}</td></tr>{% endfor %}
+  </table></div></div>
+  <div class="cartao"><h3>Resultado dos CDs</h3><table><tr><th>CD</th><th class="n">Lojas</th><th class="n">Transferido</th><th class="n">Margem distrib.</th><th class="n">Frete</th><th class="n">EBITDA</th></tr>
+    {% for c in cds %}<tr><td><a href="{{ url_for('rede.unidade', uid=c.cd_id) }}">{{ c.cd }}</a></td><td class="n">{{ c.lojas }}</td><td class="n">{{ c.valor|mil }}</td><td class="n">{{ c.margem|mil }}</td><td class="n">{{ c.frete|mil }}</td><td class="n {{ 'neg' if c.ebitda < 0 }}">{{ c.ebitda|mil }}</td></tr>{% endfor %}</table>
+    <p class="muted">Margem de distribuição = preço de transferência − custo de compra do CD (compra centralizada com desconto).</p></div>
+  <div class="cartao"><h3>Simulador de frete</h3>
+    <div class="form-grade" style="grid-template-columns:1fr 1fr">
+      <div class="campo"><label>Distância rodoviária (km)</label><input type="number" id="sKm" value="800"></div>
+      <div class="campo"><label>Valor por envio (R$)</label><input type="number" id="sValor" value="120000"></div>
+      <div class="campo"><label>Envios por semana</label><input type="number" id="sEnv" value="2"></div>
+      <div class="campo"><label>Faturamento mensal da loja (R$)</label><input type="number" id="sFat" value="1800000"></div>
+    </div>
+    <p id="sRes" style="font-size:15px;margin-top:12px"></p></div>
+</div>
+<div class="cartao mt"><h3>Fornecedores</h3><div class="rolagem"><table>
+  <tr><th>Fornecedor</th><th>Abrangência</th><th>Tipo</th><th>Base</th><th class="n">Compras 12m</th><th class="n">Unidades atendidas</th><th class="n">Distância média</th></tr>
+  {% for f in forn|sort(attribute='compras', reverse=true) %}<tr><td>{{ f.nome_fantasia }}</td><td>{{ f.abrangencia|capitalize }}{% if f.regiao_atendida %} · {{ f.regiao_atendida }}{% endif %}</td><td>{{ f.tipo }}</td>
+    <td>{{ f.cidade }}/{{ f.uf }}</td><td class="n">{{ f.compras|mil }}</td><td class="n">{{ f.unidades }}</td><td class="n">{{ f.km|num }} km</td></tr>{% endfor %}
+</table></div></div>
+{% endblock %}
+{% block scripts %}
+<script>
+const rotas = {{ rotas|tojson }}, unid = {{ unid|tojson }}, forn = {{ forn|tojson }};
+const P = {{ par|tojson }};
+function simular() {
+  const km = +sKm.value, v = +sValor.value, e = +sEnv.value, fat = +sFat.value;
+  const viag = Math.max(1, Math.ceil(v / P.cap)), custo = viag * (P.fixo + P.km * km), mes = custo * e * 4.33;
+  sRes.innerHTML = `Frete por envio: <b>${VV.brl(custo)}</b> (${viag} viagem/ns) · <b>${VV.fmtNum(2).format(custo / v * 100)}%</b> do valor<br>
+    Por mês: <b>${VV.brl(mes)}</b> = <b>${VV.fmtNum(2).format(mes / fat * 100)}%</b> do faturamento da loja`;
+}
+['sKm', 'sValor', 'sEnv', 'sFat'].forEach(i => document.getElementById(i).addEventListener('input', simular)); simular();
+const mapa = VVMapa.criar('mapa');
+if (mapa) {
+  const porId = Object.fromEntries(unid.map(u => [u.id, u]));
+  const cRotas = L.layerGroup().addTo(mapa), cNac = L.layerGroup(), cReg = L.layerGroup();
+  const vmax = Math.max(...rotas.map(r => r.valor));
+  const fp = rotas.map(r => r.frete_pct_valor);
+  const esc = VVMapa.escalaDiv(Math.min(...fp), [...fp].sort((a, b) => a - b)[Math.floor(fp.length / 2)], Math.max(...fp));
+  rotas.forEach(r => {
+    const med = [...fp].sort((a, b) => a - b)[Math.floor(fp.length / 2)];
+    L.polyline([[r.cd_lat, r.cd_lon], [r.loja_lat, r.loja_lon]], {color: esc(2 * med - r.frete_pct_valor), weight: 2 + 8 * Math.sqrt(r.valor / vmax), opacity: .85})
+      .bindPopup(`<b>${r.cd} → ${r.loja}</b><br>${VV.fmtNum(0).format(r.km)} km · lead time ${VV.fmtNum(1).format(r.lead_real)} dias<br>${r.envios} envios, ${r.viagens} viagens em 12 meses<br>
+        Transferido ${VV.compacto(r.valor)} · frete ${VV.compacto(r.frete)} (${VV.fmtNum(2).format(r.frete_pct_valor * 100)}% do valor; ${VV.fmtNum(2).format(r.frete_pct_receita * 100)}% do faturamento)`).addTo(cRotas);
+  });
+  forn.forEach(f => {
+    if (f.lat == null) return;
+    const nac = f.abrangencia === 'NACIONAL';
+    const camada = nac ? cNac : cReg;
+    L.circleMarker([f.lat, f.lon], {radius: 5, color: '#fcfcfb', weight: 1, fillColor: nac ? '#6250d6' : '#e87ba4', fillOpacity: .9})
+      .bindPopup(`<b>${f.nome_fantasia}</b><br>${nac ? 'Nacional (abastece CDs)' : 'Regional ' + f.regiao_atendida + ' (perecíveis)'}<br>${f.cidade}/${f.uf} · compras 12m ${VV.compacto(f.compras)}`).addTo(camada);
+    (f.destinos || '').split(',').filter(Boolean).forEach(d => { const u = porId[+d]; if (u) L.polyline([[f.lat, f.lon], [u.lat, u.lon]], {color: nac ? '#6250d6' : '#e87ba4', weight: 1, opacity: .35}).addTo(camada); });
+  });
+  unid.forEach(u => {
+    const cor = u.tipo === 'CD' ? VVMapa.cores.cd : u.tipo === 'SEDE' ? VVMapa.cores.sede : (u.modelo === 'PROPRIA' ? VVMapa.cores.loja : VVMapa.cores.franquia);
+    L.marker([u.lat, u.lon], {icon: L.divIcon({className: '', html: `<div style="background:${cor};color:#fff;font:600 10.5px system-ui;padding:2px 4px;border-radius:4px;border:2px solid #fff;white-space:nowrap">${u.codigo}</div>`})})
+      .bindTooltip(`${u.nome} (${u.cidade})`).addTo(mapa);
+  });
+  cRotas.addTo(mapa);
+  document.getElementById('cRotas').onchange = e => e.target.checked ? cRotas.addTo(mapa) : cRotas.remove();
+  document.getElementById('cNac').onchange = e => e.target.checked ? cNac.addTo(mapa) : cNac.remove();
+  document.getElementById('cReg').onchange = e => e.target.checked ? cReg.addTo(mapa) : cReg.remove();
+  VVMapa.legenda(mapa, `<b>Rotas CD → loja</b><br><i class="q" style="background:#1c5cab"></i>frete/valor baixo<br><i class="q" style="background:#d03b3b"></i>frete/valor alto<br>espessura = valor transferido<br>
+    <i style="background:${VVMapa.cores.cd}" class="q"></i>CD <i style="background:${VVMapa.cores.loja}" class="q"></i>própria <i style="background:${VVMapa.cores.franquia}" class="q"></i>franquia<br>
+    <i style="background:#6250d6"></i>fornecedor nacional <i style="background:#e87ba4"></i>regional`);
+}
+</script>
+{% endblock %}

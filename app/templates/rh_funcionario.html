@@ -1,0 +1,41 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}
+{% block titulo %}{{ f.nome }}{% endblock %}
+{% block conteudo %}
+<div class="topo"><div><h1>{{ f.nome }}</h1>
+  <div class="sub">{{ f.unidade }} · {{ f.matricula }} · {{ f.cargo }} ({{ f.departamento }}) · {{ f.tipo_contrato|replace('_',' ')|capitalize }} · turno {{ f.turno|lower }} · admitido em {{ f.data_admissao|data_br }}
+  {% if f.data_demissao %} · <b>desligado em {{ f.data_demissao|data_br }}</b> ({{ f.motivo_desligamento }}){% endif %}</div></div>
+  <a class="btn" href="{{ url_for('rh.funcionarios') }}">‹ Funcionários</a></div>
+<div class="grade g4">
+  {{ m.kpi('Salário atual', salario|brl) }}
+  {{ m.kpi('Nascimento', f.data_nascimento|data_br, 'CPF ' ~ f.cpf ~ ' (fictício)') }}
+  {{ m.kpi('Vale-transporte', 'Sim' if f.usa_vale_transporte else 'Não') }}
+  {% set d = {} %}{% for e in esc %}{% set _ = d.update({e.tipo: e.n}) %}{% endfor %}
+  {{ m.kpi('Dias trabalhados', d.get('TRABALHO', 0)|num, 'faltas ' ~ d.get('FALTA', 0) ~ ' · atestados ' ~ d.get('ATESTADO', 0) ~ ' · férias ' ~ d.get('FERIAS', 0) ~ ' dias') }}
+</div>
+<div class="grade g2 mt">
+  <div class="cartao"><h3>Histórico salarial</h3><table><tr><th>Desde</th><th>Motivo</th><th class="n">Salário</th></tr>
+    {% for h in hist %}<tr><td>{{ h.data_inicio|data_br }}</td><td>{{ h.motivo }}</td><td class="n">{{ h.salario|brl }}</td></tr>{% endfor %}</table>
+    {% if not f.data_demissao %}
+    <form method="post" action="{{ url_for('rh.reajuste', fid=f.id) }}" class="linha mt">
+      <div class="campo"><label>Novo salário</label><input type="text" name="salario" required style="width:110px"></div>
+      <div class="campo"><label>A partir de</label><input type="date" name="data" value="{{ hoje_iso }}"></div>
+      <div class="campo"><label>Motivo</label><select name="motivo"><option>Promoção</option><option>Mérito</option><option>Enquadramento</option><option>Dissídio</option></select></div>
+      <button>Registrar</button></form>{% endif %}</div>
+  <div class="cartao">
+    {% if vendas %}<h3>Produtividade no caixa (12 meses)</h3><table><tr><th>Mês</th><th class="n">Cupons</th><th class="n">Faturamento</th></tr>
+      {% for v in vendas %}<tr><td>{{ rotulo_mes(v.c) }}</td><td class="n">{{ v.cupons|num }}</td><td class="n">{{ v.receita|brl }}</td></tr>{% endfor %}</table>{% endif %}
+    {% if not f.data_demissao %}
+    <h3 class="mt">Desligar funcionário</h3>
+    <form method="post" action="{{ url_for('rh.desligar', fid=f.id) }}" class="linha" onsubmit="return confirm('Confirmar o desligamento?')">
+      <div class="campo"><label>Data</label><input type="date" name="data" value="{{ hoje_iso }}"></div>
+      <div class="campo"><label>Motivo</label><select name="motivo"><option>Pedido de demissão</option><option>Dispensa sem justa causa</option><option>Término de contrato de experiência</option><option>Justa causa</option><option>Término de contrato temporário</option></select></div>
+      <button>Desligar</button></form>{% endif %}
+  </div>
+</div>
+<div class="cartao mt"><h3>Holerites</h3><div class="tabela-wrap"><table>
+  <tr><th>Competência</th><th class="n">Dias</th><th class="n">Salário base</th><th class="n">HE (h)</th><th class="n">HE + DSR</th><th class="n">Rescisão</th><th class="n">Bruto</th><th class="n">INSS</th><th class="n">IRRF</th><th class="n">VT</th><th class="n">Líquido</th><th class="n">Custo empresa</th></tr>
+  {% for r in folha %}<tr><td>{{ rotulo_mes(r.competencia) }}</td><td class="n">{{ r.dias_trabalhados }}</td><td class="n">{{ r.salario_base|brl }}</td><td class="n">{{ r.horas_extras_qtd|num(1) }}</td>
+    <td class="n">{{ (r.horas_extras_valor + r.dsr_horas_extras)|brl }}</td><td class="n">{{ r.verbas_rescisorias|brl }}</td><td class="n">{{ r.salario_bruto|brl }}</td><td class="n">{{ r.inss_funcionario|brl }}</td>
+    <td class="n">{{ r.irrf|brl }}</td><td class="n">{{ r.desconto_vt|brl }}</td><td class="n">{{ r.salario_liquido|brl }}</td><td class="n">{{ r.custo_total|brl }}</td></tr>{% endfor %}
+</table></div></div>
+{% endblock %}

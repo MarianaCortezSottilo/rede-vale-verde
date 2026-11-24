@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Painel{% endblock %} · Rede Vale Verde</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='vv.css') }}">
+  {% if chart_local %}<script src="{{ url_for('static', filename='chart.umd.min.js') }}"></script>
+  {% else %}<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>{% endif %}
+  <script src="{{ url_for('static', filename='vv.js') }}"></script>
+  {% block head %}{% endblock %}
+</head>
+<body>
+<div class="layout">
+  <nav class="lateral">
+    <div class="marca">
+      <div class="logo">VV</div>
+      <div><b>Rede Vale Verde</b><small>Franquia de supermercados · fictícia</small></div>
+    </div>
+    {% set ep = request.endpoint or '' %}
+    {% macro item(endpoint, rotulo) %}<a href="{{ url_for(endpoint) }}" class="{{ 'ativo' if ep == endpoint }}">{{ rotulo }}</a>{% endmacro %}
+    {{ item('com.painel', 'Painel geral') }}
+    <h6>Rede e mapas</h6>
+    {{ item('rede.rede', 'Comparativo da rede') }}
+    {{ item('rede.mapa_clientes', 'Clientes e área de influência') }}
+    {{ item('rede.mapa_logistica', 'Logística e CDs') }}
+    {{ item('rede.expansao', 'Expansão') }}
+    {{ item('rede.franquia', 'Franqueadora e franqueados') }}
+    <h6>Comercial</h6>
+    {{ item('com.vendas', 'Vendas') }}
+    {{ item('com.curva_abc', 'Curva ABC') }}
+    {{ item('com.promocoes', 'Promoções') }}
+    {{ item('com.cupons', 'Cupons fiscais') }}
+    {{ item('com.pdv', 'PDV · nova venda') }}
+    <h6>Suprimentos</h6>
+    {{ item('com.compras', 'Pedidos de compra') }}
+    {{ item('com.transferencias', 'Transferências CD → loja') }}
+    {{ item('com.sugestao', 'Sugestão de compra') }}
+    {{ item('com.estoque', 'Estoque') }}
+    {{ item('com.perdas', 'Perdas e rupturas') }}
+    {{ item('com.consumo', 'Consumo interno') }}
+    <h6>Financeiro</h6>
+    {{ item('fin.dre', 'DRE gerencial') }}
+    {{ item('fin.fluxo', 'Fluxo de caixa') }}
+    {{ item('fin.contas', 'Contas a pagar') }}
+    {{ item('fin.despesas', 'Despesas fixas e variáveis') }}
+    {{ item('ext.projecoes', 'Projeções e cenários') }}
+    <h6>Pessoas</h6>
+    {{ item('rh.funcionarios', 'Funcionários') }}
+    {{ item('rh.escala', 'Escala de trabalho') }}
+    {{ item('rh.folha', 'Folha de pagamento') }}
+    {{ item('rh.indicadores', 'Indicadores de RH') }}
+    <h6>Dados</h6>
+    {{ item('ext.produtos', 'Produtos') }}
+    {{ item('ext.fornecedores', 'Fornecedores') }}
+    {{ item('ext.clientes', 'Clientes (RFM)') }}
+    {{ item('ext.sql', 'Consulta SQL') }}
+    {{ item('ext.dicionario', 'Dicionário de dados') }}
+  </nav>
+  <main>
+    <div class="barra-unidade">
+      <label for="selU">Visão</label>
+      <select id="selU" onchange="trocarUnidade(this.value)">
+        <optgroup label="Agrupamentos">{% for k, v in SELECOES.items() %}<option value="{{ k }}" {{ 'selected' if sel == k }}>{{ v }}</option>{% endfor %}</optgroup>
+        {% for tipo, rot in [('LOJA', 'Lojas'), ('CD', 'Centros de distribuição'), ('SEDE', 'Sede')] %}
+        <optgroup label="{{ rot }}">{% for u in unidades if u.tipo == tipo %}<option value="{{ u.id }}" {{ 'selected' if sel == u.id|string }}>{{ u.codigo }} · {{ u.nome }}{{ ' (franquia)' if u.modelo == 'FRANQUIA' }}</option>{% endfor %}</optgroup>
+        {% endfor %}
+      </select>
+      {% if un_unica %}<a href="{{ url_for('rede.unidade', uid=un_unica) }}">ficha da unidade</a>{% endif %}
+    </div>
+    {% with msgs = get_flashed_messages(with_categories=true) %}
+      {% for cat, m in msgs %}<div class="flash {{ cat }}">{{ m }}</div>{% endfor %}
+    {% endwith %}
+    {% block conteudo %}{% endblock %}
+  </main>
+</div>
+<script>
+function trocarUnidade(v) { const u = new URL(location.href); u.searchParams.set('u', v); u.searchParams.delete('unidade_id'); u.searchParams.delete('loja'); location.href = u.toString(); }
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

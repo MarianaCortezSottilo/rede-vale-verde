@@ -1,0 +1,16 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}
+{% block titulo %}Transferências{% endblock %}
+{% block conteudo %}
+<div class="topo"><div><h1>Transferências CD → loja</h1><div class="sub">{{ n }} transferências no filtro (as que estão em trânsito aparecem sempre). Lojas próprias: intercompany sem título; franqueadas: título a pagar ao CD.</div></div>
+  {{ m.filtro_periodo(ci, cf) }}</div>
+<div class="cartao"><h3>Resumo por rota</h3><table>
+  <tr><th>CD</th><th>Loja</th><th class="n">Distância</th><th class="n">Envios</th><th class="n">Viagens</th><th class="n">Valor</th><th class="n">Frete</th><th class="n">Frete/valor</th></tr>
+  {% for r in resumo %}<tr><td>{{ r.cd }}</td><td>{{ r.loja }}</td><td class="n">{{ r.km|num }} km</td><td class="n">{{ r.envios }}</td><td class="n">{{ r.viagens }}</td><td class="n">{{ r.valor|brl }}</td><td class="n">{{ r.frete|brl }}</td><td class="n">{{ r.frete_pct|pct(2) }}</td></tr>{% endfor %}
+</table></div>
+<div class="cartao mt"><div class="rolagem"><table>
+  <tr><th>Transferência</th><th>CD</th><th>Loja</th><th>Envio</th><th>Recebimento</th><th class="n">Valor</th><th class="n">Custo CD</th><th class="n">Frete</th><th>Status</th></tr>
+  {% for t in t %}<tr><td><a href="{{ url_for('com.transferencia', tid=t.id) }}">TR-{{ '%06d'|format(t.id) }}</a></td><td>{{ t.cd }}</td><td>{{ t.loja }} <span class="muted">{{ t.loja_nome }}</span></td>
+    <td>{{ t.data_envio|data_br }}</td><td>{{ t.data_recebimento|data_br }}</td><td class="n">{{ t.valor_transferencia|brl }}</td><td class="n">{{ t.valor_custo_cd|brl }}</td><td class="n">{{ t.custo_frete|brl }}</td>
+    <td><span class="etq {{ 'ok' if t.status == 'RECEBIDA' else 'alerta' }}">{{ t.status|replace('_', ' ')|capitalize }}</span></td></tr>{% endfor %}
+</table></div></div>
+{% endblock %}

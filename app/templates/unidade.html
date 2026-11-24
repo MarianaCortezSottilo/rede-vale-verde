@@ -1,0 +1,38 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}
+{% block titulo %}{{ u.codigo }}{% endblock %}
+{% block head %}{% include '_leaflet.html' %}{% endblock %}
+{% block conteudo %}
+<div class="topo"><div><h1>{{ u.codigo }} · {{ u.nome }} {% if u.modelo %}<span class="etq {{ u.modelo }}">{{ 'Própria' if u.modelo == 'PROPRIA' else 'Franquia' }}</span>{% endif %}</h1>
+  <div class="sub">{{ u.endereco }} · {{ u.cidade }}/{{ u.uf }} ({{ u.regiao }}) · inaugurada em {{ u.data_inauguracao|data_br }}{% if u.area_m2 %} · {{ u.area_m2|num }} m²{% endif %}{% if u.checkouts %} · {{ u.checkouts }} checkouts{% endif %}
+  {% if u.franqueado %} · franqueado {{ u.franqueado }}{% endif %}{% if u.cd_codigo %} · abastecida pelo {{ u.cd_codigo }} ({{ u.distancia_cd_km|num }} km, {{ u.lead_time_cd_dias }} dia(s), pedidos {{ u.dias_pedido_cd|replace(',', ', ')|lower }}){% endif %}</div></div>
+  <a class="btn btn-primario" href="{{ url_for('com.painel', u=u.id) }}">Ver o sistema filtrado por esta unidade</a></div>
+<div class="grade g6">
+  {% if u.tipo == 'LOJA' %}{{ m.kpi('Faturamento 12m', (d.receita_bruta + d.descontos)|mil) }}{% endif %}
+  {% if u.tipo == 'CD' %}{{ m.kpi('Margem de distribuição 12m', d.margem_distribuicao|mil) }}{{ m.kpi('Fretes 12m', (-d.logistica)|mil) }}{% endif %}
+  {% if u.tipo == 'SEDE' %}{{ m.kpi('Receitas de franquia 12m', d.receitas_franquia|mil) }}{% endif %}
+  {{ m.kpi('EBITDA 12m', d.ebitda|mil) }}
+  {{ m.kpi('Lucro antes do IR', d.lair|mil) }}
+  {{ m.kpi('Funcionários ativos', hc) }}
+  {{ m.kpi('Estoque', (est or 0)|mil) }}
+  {{ m.kpi('Pessoal 12m', (-d.pessoal_folha)|mil) }}
+</div>
+<div class="grade g2 mt">
+  <div class="cartao"><h3>Localização</h3><div id="mapa" class="mapa baixo"></div></div>
+  <div class="cartao">{% if g.receita %}<h3>Faturamento mensal</h3><div class="grafico baixo"><canvas id="gRec"></canvas></div>
+    {% elif atendidas %}<h3>Lojas atendidas</h3><table><tr><th>Loja</th><th class="n">Distância</th></tr>{% for a in atendidas %}<tr><td><a href="{{ url_for('rede.unidade', uid=a.id) }}">{{ a.codigo }}</a> {{ a.nome }}</td><td class="n">{{ a.distancia_cd_km|num }} km</td></tr>{% endfor %}</table>
+    {% else %}<h3>Atalhos</h3><p><a href="{{ url_for('rede.franquia') }}">Painel da franqueadora</a></p>{% endif %}
+    <p class="mt"><a href="{{ url_for('fin.dre', u=u.id) }}">DRE</a> · <a href="{{ url_for('com.estoque', u=u.id) }}">estoque</a> · <a href="{{ url_for('rh.funcionarios', u=u.id) }}">funcionários</a> · <a href="{{ url_for('rh.escala', u=u.id) }}">escala</a>
+      {% if u.tipo == 'LOJA' %} · <a href="{{ url_for('rede.mapa_clientes', loja=u.id) }}">área de influência</a>{% endif %}</p></div>
+</div>
+{% endblock %}
+{% block scripts %}<script>
+const u = {{ {'lat': u.lat, 'lon': u.lon, 'codigo': u.codigo}|tojson }}, conc = {{ conc|tojson }}, atendidas = {{ atendidas|tojson }}, cd = {{ cd|tojson }}, g = {{ g|tojson }};
+if (g.receita.length) VV.grafico('gRec', g.meses, [{nome: 'Faturamento', dados: g.receita, slot: 0}], {fmt: 'brl', legenda: false});
+const mapa = VVMapa.criar('mapa', [u.lat, u.lon], atendidas.length ? 5 : 13);
+if (mapa) {
+  L.circleMarker([u.lat, u.lon], {radius: 9, color: '#fff', weight: 2, fillColor: VVMapa.cores.loja, fillOpacity: 1}).bindTooltip(u.codigo, {permanent: true}).addTo(mapa);
+  conc.forEach(c => L.circleMarker([c.lat, c.lon], {radius: 5, stroke: false, fillColor: VVMapa.cores.concorrente, fillOpacity: .8}).bindTooltip(`${c.nome} (${c.formato}) · ${VV.fmtNum(1).format(c.distancia_km)} km`).addTo(mapa));
+  atendidas.forEach(a => { L.circleMarker([a.lat, a.lon], {radius: 6, color: '#fff', weight: 1.5, fillColor: VVMapa.cores.franquia, fillOpacity: 1}).bindTooltip(a.codigo).addTo(mapa); L.polyline([[u.lat, u.lon], [a.lat, a.lon]], {color: VVMapa.cores.cd, weight: 1.5, dashArray: '4 4'}).addTo(mapa); });
+  if (cd) L.polyline([[u.lat, u.lon], [cd.lat, cd.lon]], {color: VVMapa.cores.cd, weight: 1.5, dashArray: '4 4'}).bindTooltip(cd.codigo).addTo(mapa);
+}
+</script>{% endblock %}

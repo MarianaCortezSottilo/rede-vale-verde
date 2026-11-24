@@ -1,0 +1,255 @@
+table dUnidade
+	lineageTag: 98cbb0ff-4ad8-478c-910d-5245defdd2e8
+
+	/// Identificador da unidade.
+	column UnidadeID
+		dataType: int64
+		formatString: 0
+		lineageTag: 72f9e07b-e7bb-4c9d-8ec8-100c1c7a0d95
+		summarizeBy: none
+		sourceColumn: UnidadeID
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Código curto: SEDE, CD01 a CD03, VV01 a VV10.
+	column Codigo
+		dataType: string
+		lineageTag: 530cc409-f9b3-467f-abdf-427eb268b5f0
+		summarizeBy: none
+		sourceColumn: Codigo
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Nome da unidade.
+	column Unidade
+		dataType: string
+		lineageTag: 609ac8cc-c39b-479f-914b-f960811307f2
+		summarizeBy: none
+		sourceColumn: Unidade
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	/// SEDE, CD (centro de distribuição) ou LOJA.
+	column Tipo
+		dataType: string
+		lineageTag: 38339956-ca50-422b-bb4e-4b11e9e1e22e
+		summarizeBy: none
+		sourceColumn: Tipo
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	/// PROPRIA (loja da rede), FRANQUIA (loja de franqueado) ou FRANQUEADORA (sede e CDs).
+	column Modelo
+		dataType: string
+		lineageTag: 2399c612-3ab9-4e40-92d9-f26b4096c03e
+		summarizeBy: none
+		sourceColumn: Modelo
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Município da unidade. Pode ligar em dCidade[Cidade] (opcional).
+	column Cidade
+		dataType: string
+		lineageTag: fc2d1932-a552-4778-b5c2-b56927cd73a6
+		summarizeBy: none
+		sourceColumn: Cidade
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Sigla do estado.
+	column UF
+		dataType: string
+		lineageTag: 6e944e05-7efe-4f59-9393-b280ce6c0c59
+		summarizeBy: none
+		sourceColumn: UF
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Região do Brasil (Sudeste, Sul, Nordeste, Centro-Oeste, Norte).
+	column Regiao
+		dataType: string
+		lineageTag: fb96b26c-773b-4e2c-9ade-d3f3a0895a0e
+		summarizeBy: none
+		sourceColumn: Regiao
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Latitude da unidade, para mapas. Não resumir.
+	column Latitude
+		dataType: double
+		lineageTag: 5a6fa4bc-d6ee-4fd1-8b63-765b1888572b
+		summarizeBy: none
+		sourceColumn: Latitude
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = User
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// Longitude da unidade, para mapas. Não resumir.
+	column Longitude
+		dataType: double
+		lineageTag: 84c650d0-f633-4779-bf54-0394cbabedc9
+		summarizeBy: none
+		sourceColumn: Longitude
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = User
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// Área de vendas (lojas) ou área construída (CDs e sede), em m².
+	column AreaM2
+		dataType: int64
+		formatString: 0
+		lineageTag: 71304ef5-aca9-4ff4-8568-57a1851389a8
+		summarizeBy: none
+		sourceColumn: AreaM2
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = User
+
+	/// Quantidade de caixas (PDVs) da loja. Vazio para sede e CDs.
+	column Checkouts
+		dataType: int64
+		formatString: 0
+		lineageTag: ce4e3da6-95d9-4fd2-9eb2-ed2441eb5d78
+		summarizeBy: none
+		sourceColumn: Checkouts
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = User
+
+	/// Data de abertura. Lojas inauguradas no período: VV09 (mar/25), VV06 (set/25), VV10 (abr/26).
+	column Inauguracao
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: b3392432-ecb4-439b-b8a1-51c94e08a75d
+		summarizeBy: none
+		sourceColumn: Inauguracao
+
+		variation Variação
+			isDefault
+			relationship: 16026481-4952-49c6-b4d8-d517499cf36a
+			defaultHierarchy: LocalDateTable_ffa946f8-ea34-454b-afdd-7794d75e1fbf.'Hierarquia de datas'
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	/// Código do CD que abastece a loja. Vazio para sede e CDs.
+	column CD
+		dataType: string
+		lineageTag: 350422bb-2b40-4067-afef-9a8834341559
+		summarizeBy: none
+		sourceColumn: CD
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Distância rodoviária estimada entre a loja e o seu CD, em km.
+	column DistanciaCDkm
+		dataType: double
+		lineageTag: 4550d0fe-4c84-48b0-bb0e-2388bfa6ab0f
+		summarizeBy: none
+		sourceColumn: DistanciaCDkm
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = User
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// Dias entre o envio pelo CD e a chegada na loja.
+	column LeadTimeCD
+		dataType: int64
+		formatString: 0
+		lineageTag: b4c6c68e-ad68-457c-bea8-4ca350af0a04
+		summarizeBy: none
+		sourceColumn: LeadTimeCD
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = User
+
+	/// Nome do grupo franqueado. Vazio para lojas próprias.
+	column Franqueado
+		dataType: string
+		lineageTag: d2db829a-4c29-4def-9d5b-294ec012f2b1
+		summarizeBy: none
+		sourceColumn: Franqueado
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Multiplicador de preço da praça em relação à tabela da rede (1,03 = 3% acima).
+	column FatorPreco
+		dataType: double
+		lineageTag: a5fa8097-8775-4e87-ac5b-cf8cf5b072d3
+		summarizeBy: none
+		sourceColumn: FatorPreco
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = User
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Loja = dUnidade[Codigo] & " " & dUnidade[Cidade]
+		dataType: string
+		lineageTag: 3c910af5-b972-4ae8-9ef5-57ee0049e976
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Modelo Ordem' = SWITCH ( dUnidade[Modelo], "PROPRIA", 1, "FRANQUIA", 2, 3 )
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 367ae1b0-3a28-4959-a37c-255d089a2904
+		summarizeBy: none
+
+	column 'Modelo de Negócio' = SWITCH ( dUnidade[Modelo], "PROPRIA", "Loja própria", "FRANQUIA", "Franquia", "Franqueadora (sede e CDs)" )
+		dataType: string
+		lineageTag: 9d8a82f1-21a3-4721-b2dc-482dca70b4c9
+		summarizeBy: none
+		sortByColumn: 'Modelo Ordem'
+
+	partition dUnidade = m
+		mode: import
+		source =
+				let
+				  Origem = Csv.Document(File.Contents("C:\Users\macor\OneDrive\Documentos\Vale Verde\mercado_vale_verde\powerbi\dados\dUnidade.csv"), [Delimiter = ";", Columns = 18, Encoding = 65001, QuoteStyle = QuoteStyle.None]),
+				  #"Cabeçalhos promovidos" = Table.PromoteHeaders(Origem, [PromoteAllScalars = true]),
+				  #"Tipo de coluna alterado" = Table.TransformColumnTypes(#"Cabeçalhos promovidos", {{"UnidadeID", Int64.Type}, {"Codigo", type text}, {"Unidade", type text}, {"Tipo", type text}, {"Modelo", type text}, {"Cidade", type text}, {"UF", type text}, {"Regiao", type text}, {"Latitude", type number}, {"Longitude", type number}, {"AreaM2", Int64.Type}, {"Checkouts", Int64.Type}, {"Inauguracao", type date}, {"CD", type text}, {"DistanciaCDkm", type number}, {"LeadTimeCD", Int64.Type}, {"Franqueado", type text}, {"FatorPreco", type number}})
+				in
+				  #"Tipo de coluna alterado"
+
+	changedProperty = IsHidden
+
+	annotation PBI_ResultType = Table
+

@@ -1,0 +1,33 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}
+{% block titulo %}Promoções{% endblock %}
+{% block conteudo %}
+<div class="topo">
+  <div><h1>Promoções do encarte</h1><div class="sub">Encarte semanal (quinta a quarta) e "Quarta Verde" no hortifrúti</div></div>
+  {{ m.filtro_periodo(ci, cf) }}
+</div>
+<div class="grade g2">
+  <div class="cartao col2">
+    <h3>Efeito das promoções no volume e na margem</h3>
+    <div class="nota">Venda média diária com e sem oferta, para os produtos que entraram no encarte no período. "Aumento" = elasticidade observada.</div>
+    <div class="rolagem"><table>
+      <tr><th>Produto</th><th class="n">Dias em oferta</th><th class="n">Qtd/dia normal</th><th class="n">Qtd/dia oferta</th><th class="n">Aumento</th><th class="n">Margem normal</th><th class="n">Margem oferta</th></tr>
+      {% for r in ef %}<tr><td>{{ r.descricao }}</td><td class="n">{{ r.dias_promo }}</td><td class="n">{{ r.qtd_dia_normal|num(1) }}</td><td class="n">{{ r.qtd_dia_promo|num(1) }}</td>
+        <td class="n">{{ r.lift|pct(0, true) }}</td><td class="n">{{ r.margem_normal|pct }}</td><td class="n">{{ r.margem_promo|pct }}</td></tr>{% endfor %}
+    </table></div>
+  </div>
+  <div class="cartao">
+    <h3>Ofertas do último encarte</h3>
+    <div class="rolagem"><table>
+      <tr><th>Produto</th><th class="n">De</th><th class="n">Por</th><th class="n">Desconto</th></tr>
+      {% for r in atuais %}<tr><td>{{ r.descricao }}</td><td class="n">{{ r.preco_normal|brl }}</td><td class="n">{{ r.preco_promocional|brl }}</td><td class="n">{{ (1 - r.preco_promocional/r.preco_normal)|pct }}</td></tr>{% endfor %}
+    </table></div>
+  </div>
+  <div class="cartao">
+    <h3>Campanhas no período</h3>
+    <div class="rolagem"><table>
+      <tr><th>Campanha</th><th>Início</th><th>Fim</th><th class="n">Itens</th></tr>
+      {% for r in camp %}<tr><td>{{ r.campanha }}</td><td>{{ r.data_inicio|data_br }}</td><td>{{ r.data_fim|data_br }}</td><td class="n">{{ r.itens }}</td></tr>{% endfor %}
+    </table></div>
+  </div>
+</div>
+{% endblock %}

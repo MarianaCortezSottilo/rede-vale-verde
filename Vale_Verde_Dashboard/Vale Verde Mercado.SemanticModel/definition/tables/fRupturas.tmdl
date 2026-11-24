@@ -1,0 +1,75 @@
+table fRupturas
+	lineageTag: 940904d4-3c5b-42ee-a37e-1c3f735ade30
+
+	/// Loja.
+	column UnidadeID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 0aec45ce-e814-4a64-b8a4-c8fc46cd4ad2
+		summarizeBy: none
+		sourceColumn: UnidadeID
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Dia da falta.
+	column Data
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: fc744381-e745-4ad0-91cd-7ba2b628b0b7
+		summarizeBy: none
+		sourceColumn: Data
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	/// Produto em falta.
+	column ProdutoID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 16a0b3d5-ea0d-464b-8e87-b6b5b3ea5b72
+		summarizeBy: none
+		sourceColumn: ProdutoID
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Quantidade que os clientes teriam comprado.
+	column QtdNaoAtendida
+		dataType: double
+		lineageTag: 98859dac-82f5-46cc-baa2-937e155bc3fd
+		summarizeBy: sum
+		sourceColumn: QtdNaoAtendida
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// Venda perdida estimada, em R$ (quantidade × preço).
+	column VendaPerdida
+		dataType: double
+		lineageTag: 4a960ad5-52f4-4c0f-acb5-0576a3c4be21
+		summarizeBy: sum
+		sourceColumn: VendaPerdida
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition fRupturas = m
+		mode: import
+		source =
+				let
+				  Origem = Csv.Document(File.Contents("C:\Users\macor\OneDrive\Documentos\Vale Verde\mercado_vale_verde\powerbi\dados\fRupturas.csv"), [Delimiter = ";", Columns = 5, Encoding = 65001, QuoteStyle = QuoteStyle.None]),
+				  #"Cabeçalhos promovidos" = Table.PromoteHeaders(Origem, [PromoteAllScalars = true]),
+				  #"Tipo de coluna alterado" = Table.TransformColumnTypes(#"Cabeçalhos promovidos", {{"UnidadeID", Int64.Type}, {"Data", type date}, {"ProdutoID", Int64.Type}, {"QtdNaoAtendida", type number}, {"VendaPerdida", type number}})
+				in
+				  #"Tipo de coluna alterado"
+
+	annotation PBI_ResultType = Table
+

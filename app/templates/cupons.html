@@ -1,0 +1,20 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}
+{% block titulo %}Cupons{% endblock %}
+{% block conteudo %}
+<div class="topo">
+  <div><h1>Cupons fiscais</h1><div class="sub">{{ un_rotulo }} · {{ dia|data_br }} · {{ resumo.n|num }} cupons · {{ resumo.receita|brl }} · ticket {{ resumo.ticket|brl }}<br>
+  Cupons individuais disponíveis de {{ periodo_cupons.ini|data_br }} a {{ periodo_cupons.fim|data_br }} (os 24 meses completos estão nos resumos diários).</div></div>
+  <form class="filtros"><label>Dia</label><input type="date" name="dia" value="{{ dia }}"><button>Ver</button></form>
+</div>
+<div class="cartao">
+  <div class="tabela-wrap"><table>
+    <tr><th>Cupom</th><th>Loja</th><th>Hora</th><th>PDV</th><th>Operador</th><th>Cliente</th><th>Pagamento</th><th class="n">Itens</th><th class="n">Desconto</th><th class="n">Total</th><th class="n">Margem</th><th>Status</th></tr>
+    {% for v in linhas %}<tr><td><a href="{{ url_for('com.cupom', vid=v.id) }}">{{ '%07d'|format(v.id) }}</a></td><td>{{ v.unidade }}</td><td>{{ v.hora }}</td><td>{{ v.pdv }}</td><td>{{ v.operador or '–' }}</td><td>{{ v.cliente or '–' }}</td>
+      <td>{{ v.forma_pagamento|capitalize }}</td><td class="n">{{ v.qtd_itens }}</td><td class="n">{{ v.desconto|brl }}</td><td class="n">{{ v.valor_total|brl }}</td>
+      <td class="n">{{ (1 - v.custo_total / v.valor_bruto)|pct if v.valor_bruto else '–' }}</td><td>{{ m.status_titulo(v.status) }}</td></tr>{% endfor %}
+  </table></div>
+  <div class="paginacao">Página {{ pag }} de {{ paginas }}
+    {% if pag > 1 %}<a class="btn btn-peq" href="?dia={{ dia }}&pag={{ pag-1 }}">‹ anterior</a>{% endif %}
+    {% if pag < paginas %}<a class="btn btn-peq" href="?dia={{ dia }}&pag={{ pag+1 }}">próxima ›</a>{% endif %}</div>
+</div>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}
+{% block titulo %}Clientes{% endblock %}
+{% block conteudo %}
+<div class="topo"><div><h1>Clientes do programa de fidelidade</h1>
+  <div class="sub">{{ un_rotulo }} · {{ n|num }} clientes (fictícios). RFM (Recência, Frequência, Valor em quintis) sobre os cupons de {{ periodo.ini|data_br }} a {{ periodo.fim|data_br }}. <a href="{{ url_for('rede.mapa_clientes') }}">Ver no mapa ›</a></div></div><div class="filtros">{{ m.botao_excel() }}</div></div>
+<div class="grade g2">
+  <div class="cartao"><h3>Segmentos RFM</h3><table><tr><th>Segmento</th><th class="n">Clientes</th><th class="n">Valor comprado</th><th class="n">Ticket médio</th></tr>
+    {% for r in resumo %}<tr><td>{{ r.segmento }}</td><td class="n">{{ r.clientes|num }}</td><td class="n">{{ r.valor|brl }}</td><td class="n">{{ r.ticket|brl }}</td></tr>{% endfor %}</table></div>
+  <div class="cartao"><h3>Por bairro (60 maiores)</h3><div class="rolagem" style="max-height:300px"><table><tr><th>Loja</th><th>Bairro</th><th class="n">Clientes</th><th class="n">Valor comprado</th></tr>
+    {% for r in bairros %}<tr><td>{{ r.loja }}</td><td>{{ r.bairro }}</td><td class="n">{{ r.clientes }}</td><td class="n">{{ r.valor|brl }}</td></tr>{% endfor %}</table></div></div>
+</div>
+<div class="cartao mt"><h3>Top 200 clientes por valor</h3><div class="rolagem"><table>
+  <tr><th>Cliente</th><th>Loja</th><th>Bairro</th><th>Cadastro</th><th class="n">Compras</th><th class="n">Valor</th><th>Última compra</th><th class="n">Dias sem comprar</th><th>R F M</th><th>Segmento</th></tr>
+  {% for r in t %}<tr><td>{{ r.nome }}</td><td>{{ r.loja }}</td><td>{{ r.bairro }}</td><td>{{ r.data_cadastro|data_br }}</td><td class="n">{{ r.compras }}</td><td class="n">{{ r.valor|brl }}</td><td>{{ r.ultima_compra|data_br }}</td>
+    <td class="n">{{ r.dias_sem_comprar|num }}</td><td>{{ r.R|int if r.R else '' }} {{ r.F|int if r.F else '' }} {{ r.M|int if r.M else '' }}</td><td>{{ r.segmento }}</td></tr>{% endfor %}
+</table></div></div>
+{% endblock %}

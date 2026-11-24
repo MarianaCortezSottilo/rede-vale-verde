@@ -1,0 +1,156 @@
+relationship 16026481-4952-49c6-b4d8-d517499cf36a
+	joinOnDateBehavior: datePartOnly
+	fromColumn: dUnidade.Inauguracao
+	toColumn: LocalDateTable_ffa946f8-ea34-454b-afdd-7794d75e1fbf.Date
+
+relationship 8072c6aa-7ad5-409f-8d66-157a9a734479
+	joinOnDateBehavior: datePartOnly
+	fromColumn: fCompras.DataRecebimento
+	toColumn: LocalDateTable_322569c4-c96b-425e-9df0-fad0e080aa09.Date
+
+relationship 36df97e0-5b9c-4c02-9c63-1129a620b170
+	joinOnDateBehavior: datePartOnly
+	fromColumn: fTransferencias.DataRecebimento
+	toColumn: LocalDateTable_42a55fbf-6b6c-47ae-9c34-50897f0cc9c9.Date
+
+relationship AutoDetected_8731d7bf-e212-4f8b-8b38-4d9afd38da33
+	fromColumn: dUnidade.Cidade
+	toColumn: dCidade.Cidade
+
+relationship AutoDetected_bde388b1-b6c8-4920-89dc-2b370e77a51d
+	fromColumn: fCompras.UnidadeID
+	toColumn: dUnidade.UnidadeID
+
+relationship AutoDetected_b034d144-a828-4bc5-9733-357d77faeed2
+	fromColumn: fCupons.UnidadeID
+	toColumn: dUnidade.UnidadeID
+
+relationship AutoDetected_87f4ed7d-3a33-4bd2-948b-257757d07635
+	fromColumn: fDespesas.UnidadeID
+	toColumn: dUnidade.UnidadeID
+
+relationship AutoDetected_791c64da-dc9d-4f64-9b93-31603a247474
+	fromColumn: fDRE.UnidadeID
+	toColumn: dUnidade.UnidadeID
+
+relationship AutoDetected_5ec65aad-5276-4d25-b0a5-a046af64a61d
+	fromColumn: fFolha.UnidadeID
+	toColumn: dUnidade.UnidadeID
+
+relationship AutoDetected_46490f18-ca3d-4733-8e2c-78734293d3e9
+	fromColumn: fPerdas.UnidadeID
+	toColumn: dUnidade.UnidadeID
+
+relationship AutoDetected_bc003346-bc21-4ca1-9ed0-2347b76eb097
+	fromColumn: fReceitasFranquia.UnidadeID
+	toColumn: dUnidade.UnidadeID
+
+relationship AutoDetected_d1192dc4-6369-42cb-88e0-fb8af37ef94e
+	fromColumn: fRupturas.UnidadeID
+	toColumn: dUnidade.UnidadeID
+
+relationship AutoDetected_60bc4264-a9eb-40ae-a1f9-8ccb9e2778c1
+	fromColumn: fTransferencias.UnidadeID
+	toColumn: dUnidade.UnidadeID
+
+relationship AutoDetected_ea515196-0acb-4e74-85a7-9a415927242c
+	fromColumn: fVendas.UnidadeID
+	toColumn: dUnidade.UnidadeID
+
+relationship AutoDetected_9889e822-35ef-488c-9123-8de7ab469896
+	fromColumn: fCompras.FornecedorID
+	toColumn: dFornecedor.FornecedorID
+
+relationship AutoDetected_6bd8bf8a-b9a4-4c7d-9675-9445ecaf86e7
+	fromColumn: fPerdas.ProdutoID
+	toColumn: dProduto.ProdutoID
+
+relationship AutoDetected_4c287f0e-50b7-4a1d-ab25-399f37b7244a
+	fromColumn: fRupturas.ProdutoID
+	toColumn: dProduto.ProdutoID
+
+relationship AutoDetected_075d17e4-7ba6-411a-bfad-24c3155a7b31
+	fromColumn: fVendas.ProdutoID
+	toColumn: dProduto.ProdutoID
+
+relationship 7ed34606-d08e-3632-2fea-74d644565a19
+	fromColumn: dCliente.UnidadeID
+	toColumn: dUnidade.UnidadeID
+
+relationship 64b8eb1d-60d2-f414-7420-45030214356a
+	fromColumn: fVendas.Data
+	toColumn: dCalendario.Data
+
+relationship c5cbb1b4-b0c3-89e7-2c03-6f1779a41c4d
+	fromColumn: fReceitasFranquia.Data
+	toColumn: dCalendario.Data
+
+relationship 0fe19b90-a056-38ec-abd3-b98a9cfb422a
+	fromColumn: fCupons.Data
+	toColumn: dCalendario.Data
+
+relationship ba43fbf0-7714-57c0-25af-e22e64a3ef24
+	fromColumn: fPerdas.Data
+	toColumn: dCalendario.Data
+
+relationship 868185b0-6f14-c977-4329-cca09907eba9
+	fromColumn: fCompras.Data
+	toColumn: dCalendario.Data
+
+relationship 12dc605f-6f71-8209-b475-3c7a40a06c49
+	fromColumn: fDespesas.Data
+	toColumn: dCalendario.Data
+
+relationship 0a518e1d-fb8e-4f16-6b20-34851e44473f
+	fromColumn: fFolha.Data
+	toColumn: dCalendario.Data
+
+relationship 61d8dddd-fe06-6765-d43a-71f039d9f459
+	fromColumn: fTransferencias.Data
+	toColumn: dCalendario.Data
+
+relationship a01ce8cc-babe-03cf-587a-5e0e52635d2e
+	fromColumn: fRupturas.Data
+	toColumn: dCalendario.Data
+
+relationship 0d8ae4b6-bfe5-e715-be16-dc187e6c5b9e
+	fromColumn: fDRE.Data
+	toColumn: dCalendario.Data
+
+relationship 6f5ae880-7f99-5f51-77fd-5f269a042caf
+	fromColumn: dCliente.Cadastro
+	toColumn: dCalendario.Data
+
+relationship ac60784d-def2-27fc-71bb-1951d6fce3ec
+	isActive: false
+	fromColumn: fTransferencias.CDID
+	toColumn: dUnidade.UnidadeID
+
+relationship c07219a0-d523-465a-b083-88d4b1e0bff5
+	fromColumn: fEstoque.UnidadeID
+	toColumn: dUnidade.UnidadeID
+
+relationship e6dcd6eb-2ae3-4a49-b0fc-4bea7f84cc46
+	fromColumn: fEstoque.ProdutoID
+	toColumn: dProduto.ProdutoID
+
+relationship 894cd2b5-0948-4523-80ab-32e268937f06
+	fromColumn: fCaixa.UnidadeID
+	toColumn: dUnidade.UnidadeID
+
+relationship 5de82ab3-1103-4235-9f9d-8b2eef6b6f32
+	fromColumn: fCaixa.Data
+	toColumn: dCalendario.Data
+
+relationship 15cdbdc0-5bb3-4e64-b0a0-0a7aab55f36d
+	fromColumn: fCaixaProjetado.UnidadeID
+	toColumn: dUnidade.UnidadeID
+
+relationship 95e957e6-bc25-4b48-b667-25a1b622db07
+	fromColumn: fCaixaProjetado.Data
+	toColumn: dCalendario.Data
+
+relationship 5a3176fc-137d-4541-a168-7eb26343f889
+	fromColumn: fContasPagar.UnidadeID
+	toColumn: dUnidade.UnidadeID
+

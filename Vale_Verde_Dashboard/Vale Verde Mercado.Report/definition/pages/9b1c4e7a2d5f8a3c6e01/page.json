@@ -1,0 +1,93 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json",
+  "name": "9b1c4e7a2d5f8a3c6e01",
+  "displayName": "Resultado e DRE",
+  "displayOption": "FitToPage",
+  "height": 1080,
+  "width": 1920,
+  "objects": {
+    "background": [
+      {
+        "properties": {
+          "color": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'#F9F9F7'"
+                  }
+                }
+              }
+            }
+          },
+          "transparency": {
+            "expr": {
+              "Literal": {
+                "Value": "0D"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "outspace": [
+      {
+        "properties": {
+          "color": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'#F9F9F7'"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "visualInteractions": [
+    {
+      "source": "4c639abc60612d09a2ff",
+      "target": "35d8ec2ead8c1b2bdb20",
+      "type": "NoFilter"
+    },
+    {
+      "source": "4c639abc60612d09a2ff",
+      "target": "c51c297f4b2b0b65f52c",
+      "type": "NoFilter"
+    },
+    {
+      "source": "4c639abc60612d09a2ff",
+      "target": "01de0f37890690735bc6",
+      "type": "NoFilter"
+    },
+    {
+      "source": "4c639abc60612d09a2ff",
+      "target": "e8ab2fd51c3f2df8f33e",
+      "type": "NoFilter"
+    },
+    {
+      "source": "4c639abc60612d09a2ff",
+      "target": "8b5b264736830ee936d1",
+      "type": "NoFilter"
+    },
+    {
+      "source": "4c639abc60612d09a2ff",
+      "target": "8ab98dda97dc1e6938ad",
+      "type": "NoFilter"
+    },
+    {
+      "source": "4c639abc60612d09a2ff",
+      "target": "0ddbfac99ede98075976",
+      "type": "NoFilter"
+    },
+    {
+      "source": "4c639abc60612d09a2ff",
+      "target": "0118c5bbe94504b1874c",
+      "type": "DataFilter"
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}
+{% block titulo %}Franqueadora{% endblock %}
+{% block conteudo %}
+<div class="topo"><div><h1>Franqueadora e franqueados</h1>
+  <div class="sub">Royalties de {{ par.roy|pct(1) }} e fundo de marketing de {{ par.fundo|pct(1) }} sobre a receita bruta das lojas franqueadas · taxa inicial {{ par.taxa|mil }} · transferência dos CDs a custo + {{ par.markup|pct(0) }}. Últimos 12 meses: {{ rotulo_mes(u12[0]) }} a {{ rotulo_mes(u12[-1]) }}.</div></div>
+  <div class="filtros">{{ m.botao_excel() }}<a class="btn" href="{{ url_for('fin.dre', u='franqueadora') }}">DRE da franqueadora</a><a class="btn" href="{{ url_for('fin.dre', u='franquias') }}">DRE dos franqueados</a></div></div>
+<div class="grade g4">
+  {{ m.kpi('Resultado da franqueadora (LAIR)', dre_fq.lair|mil, 'lojas próprias + CDs + sede') }}
+  {% for b in blocos %}{{ m.kpi(b.nome, b.lair|mil, 'EBITDA ' ~ (b.ebitda|mil) ~ ' · receita ' ~ (b.receita|mil)) }}{% endfor %}
+</div>
+<div class="grade g2 mt">
+  <div class="cartao col2"><h3>Receitas de franquia por mês</h3><div class="nota">Royalties e fundo crescem com as vendas dos franqueados; taxas iniciais entram na assinatura de novos contratos</div>
+    <div class="grafico"><canvas id="gRf"></canvas></div></div>
+</div>
+<div class="cartao mt"><h3>Franqueados</h3><div class="tabela-wrap"><table>
+  <tr><th>Franqueado</th><th>Loja</th><th>Contrato</th><th>Inauguração</th><th class="n">Faturamento 12m</th><th class="n">Cresc.</th><th class="n">Royalties 12m</th><th class="n">Fundo 12m</th>
+      <th class="n">Em aberto</th><th class="n">Compras no CD</th><th class="n">Perdas</th><th class="n">LAIR do franqueado</th></tr>
+  {% for f in fr %}<tr><td><b>{{ f.franqueado }}</b><br><span class="muted">{{ f.socio_responsavel }}</span></td><td><a href="{{ url_for('rede.unidade', uid=f.id) }}">{{ f.codigo }}</a> {{ f.cidade }}</td>
+    <td>{{ f.data_contrato|data_br }}</td><td>{{ f.data_inauguracao|data_br }}</td><td class="n">{{ f.receita|mil }}</td><td class="n">{{ f.crescimento|pct(1, true) if f.crescimento is not none else 'nova' }}</td>
+    <td class="n">{{ f.royalties_12m|mil }}</td><td class="n">{{ f.fundo_12m|mil }}</td><td class="n">{{ f.em_aberto|mil }}</td><td class="n">{{ f.compras_cd|mil }}</td><td class="n">{{ f.perdas_pct|pct(2) }}</td>
+    <td class="n {{ 'neg' if f.margem_lair and f.margem_lair < 0 }}">{{ f.lair|mil }} ({{ f.margem_lair|pct(2) }})</td></tr>{% endfor %}
+</table></div></div>
+<div class="grade g2 mt">
+  <div class="cartao"><h3>Lojas próprias × franqueadas</h3><table>
+    <tr><th>Indicador</th>{% for c in comp %}<th class="n">{{ 'Próprias' if c.modelo == 'PROPRIA' else 'Franqueadas' }}</th>{% endfor %}</tr>
+    {% for rot, k, f in [('Lojas', 'lojas', 'num'), ('Faturamento 12m', 'receita', 'mil'), ('Faturamento por m²', 'receita_m2', 'brl'), ('Ticket médio', 'ticket', 'brl'), ('Margem bruta', 'margem_bruta', 'pct'), ('Perdas / faturamento', 'perdas_pct', 'pct'), ('Pessoal / faturamento', 'folha_pct', 'pct'), ('Margem antes do IR', 'margem_lair', 'pct')] %}
+    <tr><td>{{ rot }}</td>{% for c in comp %}<td class="n">{{ c[k]|mil if f == 'mil' else c[k]|brl if f == 'brl' else c[k]|pct(2) if f == 'pct' else c[k] }}</td>{% endfor %}</tr>{% endfor %}
+  </table><p class="muted">Franqueadas pagam royalties + fundo ({{ (par.roy + par.fundo)|pct(1) }}), têm pró-labore do franqueado e juros do financiamento da implantação.</p></div>
+  <div class="cartao"><h3>Taxas iniciais de franquia</h3><table><tr><th>Competência</th><th>Franqueado</th><th class="n">Valor</th></tr>
+    {% for t in taxas %}<tr><td>{{ rotulo_mes(t.competencia) }}</td><td>{{ t.nome_fantasia }}</td><td class="n">{{ t.valor|brl }}</td></tr>{% else %}<tr><td colspan="3" class="muted">Nenhum contrato novo no período.</td></tr>{% endfor %}</table></div>
+</div>
+{% endblock %}
+{% block scripts %}<script>
+const g = {{ g|tojson }};
+VV.grafico('gRf', g.meses, [{nome: 'Royalties', dados: g.roy, slot: 0, stack: 's'}, {nome: 'Fundo de marketing', dados: g.fundo, slot: 1, stack: 's'},
+  {nome: 'Taxa inicial', dados: g.taxa, slot: 2, stack: 's'}], {fmt: 'brl', empilhado: true});
+</script>{% endblock %}

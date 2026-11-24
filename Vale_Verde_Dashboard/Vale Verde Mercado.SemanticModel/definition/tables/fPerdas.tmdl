@@ -1,0 +1,93 @@
+table fPerdas
+	lineageTag: bc5628a3-667b-4403-ac19-72ed5dbb6e9c
+
+	/// Unidade onde ocorreu.
+	column UnidadeID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: e9fa4491-e3dc-463a-9559-e413c6e97beb
+		summarizeBy: none
+		sourceColumn: UnidadeID
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Dia do registro.
+	column Data
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 3e9eadf0-8edd-44ac-949d-ea67e61a98dc
+		summarizeBy: none
+		sourceColumn: Data
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	/// Produto.
+	column ProdutoID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 7911ca16-5540-434e-916a-754454b703f2
+		summarizeBy: none
+		sourceColumn: ProdutoID
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	/// PERDA (quebra), CONSUMO_INTERNO (uso pela própria loja) ou AJUSTE_INVENTARIO (diferença de contagem).
+	column Tipo
+		dataType: string
+		lineageTag: ce690476-492d-46d1-8ab4-06fddca82bbc
+		summarizeBy: none
+		sourceColumn: Tipo
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Motivo detalhado (Vencimento, Avaria, Furto/desvio, Copa/refeitório...).
+	column Motivo
+		dataType: string
+		lineageTag: b12a8f88-ed31-44e2-9fc8-51c0114b78a2
+		summarizeBy: none
+		sourceColumn: Motivo
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Quantidade baixada (positiva). Em ajuste de inventário pode ser negativa, quando sobrou produto.
+	column Quantidade
+		dataType: double
+		lineageTag: a1258292-8a20-4128-a737-e455a8803891
+		summarizeBy: sum
+		sourceColumn: Quantidade
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// Valor a custo, em R$.
+	column Valor
+		dataType: double
+		lineageTag: 776cea8e-da82-437d-89ba-7fbd6f46bbdf
+		summarizeBy: sum
+		sourceColumn: Valor
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition fPerdas = m
+		mode: import
+		source =
+				let
+				  Origem = Csv.Document(File.Contents("C:\Users\macor\OneDrive\Documentos\Vale Verde\mercado_vale_verde\powerbi\dados\fPerdas.csv"), [Delimiter = ";", Columns = 7, Encoding = 65001, QuoteStyle = QuoteStyle.None]),
+				  #"Cabeçalhos promovidos" = Table.PromoteHeaders(Origem, [PromoteAllScalars = true]),
+				  #"Tipo de coluna alterado" = Table.TransformColumnTypes(#"Cabeçalhos promovidos", {{"UnidadeID", Int64.Type}, {"Data", type date}, {"ProdutoID", Int64.Type}, {"Tipo", type text}, {"Motivo", type text}, {"Quantidade", type number}, {"Valor", type number}})
+				in
+				  #"Tipo de coluna alterado"
+
+	annotation PBI_ResultType = Table
+

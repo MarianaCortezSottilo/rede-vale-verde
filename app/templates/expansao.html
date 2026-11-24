@@ -1,0 +1,83 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}
+{% block titulo %}Expansão{% endblock %}
+{% block head %}{% include '_leaflet.html' %}{% endblock %}
+{% block conteudo %}
+<div class="topo"><div><h1>Expansão: onde abrir as próximas lojas</h1>
+  <div class="sub">{{ cand|length }} cidades candidatas. População aproximada (Censo 2022); renda e concorrência são estimativas ilustrativas — troque pelos dados do IBGE na tabela <code>cidades</code> para uma análise real.</div></div>
+  <div class="filtros">{{ m.botao_excel() }}</div></div>
+<div class="grade g2">
+  <div class="cartao">
+    <h3>Pesos do índice de atratividade</h3>
+    <div class="nota">Cada critério é normalizado de 0 a 100 entre as candidatas; o índice é a média ponderada.</div>
+    <div class="form-grade" style="grid-template-columns:1fr">
+      <div class="campo"><label>População</label><div class="slider"><input type="range" id="wPop" min="0" max="10" value="4"><output id="oPop"></output></div></div>
+      <div class="campo"><label>Renda per capita</label><div class="slider"><input type="range" id="wRen" min="0" max="10" value="5"><output id="oRen"></output></div></div>
+      <div class="campo"><label>Pouca concorrência (habitantes por supermercado)</label><div class="slider"><input type="range" id="wCon" min="0" max="10" value="3"><output id="oCon"></output></div></div>
+      <div class="campo"><label>Perto de um CD (custo logístico)</label><div class="slider"><input type="range" id="wDis" min="0" max="10" value="4"><output id="oDis"></output></div></div>
+      <div class="campo"><label>Investimento por loja (R$ mi)</label><div class="slider"><input type="range" id="inv" min="2" max="8" step="0.5" value="4.5"><output id="oInv"></output></div></div>
+    </div>
+  </div>
+  <div class="cartao">
+    <h3>Como o faturamento potencial é estimado</h3>
+    <div class="nota">Lojas da rede com 18+ meses: faturamento por m²/ano × renda per capita da cidade (escala log-log). Ajuste: elasticidade {{ calib.b|num(2) }} com {{ calib.n }} lojas.</div>
+    <div class="grafico baixo"><canvas id="gCalib"></canvas></div>
+    <p class="muted" style="margin:6px 0 0">Potencial = loja de 1.300 m² × curva acima × fator de concorrência. Lucro = potencial × margem antes do IR mediana das lojas maduras ({{ calib.margem|pct(1) }}) − frete extra pela distância ao CD.</p>
+  </div>
+</div>
+<div class="cartao mt">
+  <div class="controles-mapa"><b>Mapa de oportunidades</b><span class="muted">Bolha = população · cor = índice de atratividade · círculos verdes = 700 km de cada CD (até 2 dias de entrega)</span></div>
+  <div id="mapa" class="mapa"></div>
+</div>
+<div class="cartao mt"><h3>Ranking das candidatas</h3><div class="rolagem"><table id="tab"></table></div></div>
+{% endblock %}
+{% block scripts %}
+<script>
+const cand = {{ cand|tojson }}, lojas = {{ lojas|tojson }}, cds = {{ cd_pts|tojson }}, calib = {{ calib|tojson }};
+new Chart(document.getElementById('gCalib'), {type: 'scatter', data: {datasets: [
+  {label: 'Lojas maduras', data: calib.pontos.map(p => ({x: p.x, y: p.y, n: p.nome})), backgroundColor: VV.cores[0], pointRadius: 6},
+  {label: 'Curva ajustada', type: 'line', data: [1200, 1500, 1800, 2100, 2400, 2700, 3000, 3300].map(x => ({x, y: Math.exp(calib.a + calib.b * Math.log(x))})), borderColor: '#898781', borderDash: [5, 4], pointRadius: 0, borderWidth: 2}]},
+  options: {plugins: {tooltip: {callbacks: {label: c => c.raw.n ? `${c.raw.n}: renda ${VV.brl(c.raw.x)} · ${VV.brl(c.raw.y)}/m²/ano` : `${VV.brl(c.raw.y)}/m²`}}},
+    scales: {x: {title: {display: true, text: 'Renda per capita (R$/mês)'}, grid: {display: false}}, y: {title: {display: true, text: 'Faturamento por m²/ano'}, ticks: {callback: v => VV.compacto(v)}}}}});
+const ids = ['wPop', 'wRen', 'wCon', 'wDis'];
+function norm(arr, inv = false, log = false) {
+  const v = arr.map(x => log ? Math.log(x) : x); const mn = Math.min(...v), mx = Math.max(...v);
+  return v.map(x => (mx === mn ? 50 : (inv ? (mx - x) : (x - mn)) / (mx - mn) * 100));
+}
+const nPop = norm(cand.map(c => c.populacao), false, true), nRen = norm(cand.map(c => c.renda)), nCon = norm(cand.map(c => c.hab_por_super)), nDis = norm(cand.map(c => c.km_cd), true);
+const mapa = VVMapa.criar('mapa');
+let camada = null, leg = null;
+if (mapa) {
+  cds.forEach(c => { L.circle([c.lat, c.lon], {radius: 700000 / 1.25, color: VVMapa.cores.cd, weight: 1, fillOpacity: .04}).addTo(mapa);
+    L.marker([c.lat, c.lon], {icon: L.divIcon({className: '', html: `<div style="background:${VVMapa.cores.cd};color:#fff;font:600 10.5px system-ui;padding:2px 4px;border-radius:4px;border:2px solid #fff">${c.codigo}</div>`})}).bindTooltip(c.nome).addTo(mapa); });
+  lojas.forEach(l => L.circleMarker([l.lat, l.lon], {radius: 6, color: '#fff', weight: 2, fillColor: l.modelo === 'PROPRIA' ? VVMapa.cores.loja : VVMapa.cores.franquia, fillOpacity: 1})
+    .bindTooltip(`${l.codigo} ${l.cidade} (loja atual): ${VV.compacto(l.receita)} em 12m`).addTo(mapa));
+}
+function calc() {
+  const w = ids.map(i => +document.getElementById(i).value); const sw = w.reduce((a, b) => a + b, 0) || 1;
+  ids.forEach((i, k) => document.getElementById('o' + i.slice(1)).textContent = w[k]);
+  const inv = +document.getElementById('inv').value * 1e6; document.getElementById('oInv').textContent = VV.fmtNum(1).format(inv / 1e6);
+  const linhas = cand.map((c, k) => Object.assign({}, c, {score: (w[0] * nPop[k] + w[1] * nRen[k] + w[2] * nCon[k] + w[3] * nDis[k]) / sw,
+                                                          payback: c.lucro_est > 0 ? inv / c.lucro_est : null}))
+    .sort((a, b) => b.score - a.score);
+  let h = '<tr><th>#</th><th>Cidade</th><th>Região</th><th class="n">Índice</th><th class="n">População</th><th class="n">Renda</th><th class="n">Hab./super</th><th>CD mais próximo</th><th class="n">Fat. potencial/ano</th><th class="n">Frete/fat.</th><th class="n">Payback</th></tr>';
+  linhas.forEach((c, i) => h += `<tr><td>${i + 1}</td><td><b>${c.nome}</b>/${c.uf}</td><td>${c.regiao}</td><td class="n"><b>${VV.fmtNum(0).format(c.score)}</b></td><td class="n">${VV.fmtNum(0).format(c.populacao)}</td>
+    <td class="n">${VV.brl(c.renda)}</td><td class="n">${VV.fmtNum(0).format(c.hab_por_super)}</td><td>${c.cd} · ${VV.fmtNum(0).format(c.km_cd)} km</td><td class="n">${VV.compacto(c.receita_est)}</td>
+    <td class="n">${VV.fmtNum(2).format(c.frete_pct * 100)}%</td><td class="n">${c.payback ? VV.fmtNum(1).format(c.payback) + ' anos' : 'não paga'}</td></tr>`);
+  document.getElementById('tab').innerHTML = h;
+  if (!mapa) return;
+  if (camada) camada.remove(); if (leg) leg.remove();
+  camada = L.layerGroup().addTo(mapa);
+  const esc = VVMapa.escalaDiv(0, 50, 100);
+  const pmax = Math.max(...linhas.map(c => c.populacao));
+  linhas.forEach((c, i) => L.circleMarker([c.lat, c.lon], {radius: VVMapa.raioBolha(c.populacao, pmax, 5, 26), color: '#fcfcfb', weight: 1.5, fillColor: esc(c.score), fillOpacity: .88})
+    .bindPopup(`<b>${i + 1}º · ${c.nome}/${c.uf}</b> — índice ${VV.fmtNum(0).format(c.score)}<br>População ${VV.fmtNum(0).format(c.populacao)} · renda ${VV.brl(c.renda)}<br>
+      ${c.concorrentes} supermercados (${VV.fmtNum(0).format(c.hab_por_super)} hab./super)<br>${c.cd} a ${VV.fmtNum(0).format(c.km_cd)} km<br>
+      Potencial ${VV.compacto(c.receita_est)}/ano · frete ${VV.fmtNum(2).format(c.frete_pct * 100)}% · payback ${c.payback ? VV.fmtNum(1).format(c.payback) + ' anos' : '—'}`)
+    .bindTooltip(`${i + 1}º ${c.nome}: ${VV.fmtNum(0).format(c.score)}`).addTo(camada));
+  leg = VVMapa.legenda(mapa, `<b>Índice de atratividade</b><br><i style="background:#1c5cab"></i>alto (75+)<br><i style="background:#cde2fb"></i>médio (50)<br><i style="background:#d03b3b"></i>baixo<br>
+    <i style="background:${VVMapa.cores.loja}"></i>loja própria <i style="background:${VVMapa.cores.franquia}"></i>franquia`);
+}
+[...ids, 'inv'].forEach(i => document.getElementById(i).addEventListener('input', calc));
+calc();
+</script>
+{% endblock %}

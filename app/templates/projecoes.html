@@ -1,0 +1,115 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}
+{% block titulo %}Projeções{% endblock %}
+{% block conteudo %}
+<div class="topo"><div><h1>Projeções e simulador de cenários</h1>
+  <div class="sub"><b>{{ un_rotulo }}</b> · modelo em painel com todas as lojas: efeito de cada loja + tendência + sazonalidade mensal + curva de maturação das lojas novas (por isso lojas recém-inauguradas continuam crescendo na projeção). A projeção soma as lojas da seleção.</div></div>
+  <div class="filtros"><form class="filtros"><label>Horizonte</label><select name="meses" onchange="this.form.submit()">{% for k in [6, 12, 18, 24] %}<option {{ 'selected' if k==n }}>{{ k }}</option>{% endfor %}</select><label>meses</label></form>{{ m.botao_excel() }}</div></div>
+<div class="grade g4">
+  {{ m.kpi('Faturamento projetado (' ~ n ~ ' meses)', (proj|sum(attribute='receita'))|mil) }}
+  {{ m.kpi('Crescimento de tendência', p.crescimento_anual|pct(1, true), 'ao ano (volume + preço)') }}
+  {{ m.kpi('Erro médio do ajuste (MAPE)', p.mape|pct(2), 'no histórico usado para treinar') }}
+  {{ m.kpi('Erro no teste fora da amostra', erro_bt|pct(2), 'modelo treinado sem os últimos 6 meses') }}
+</div>
+<div class="grade g2 mt">
+  <div class="cartao col2"><h3>Faturamento realizado e projetado</h3><div class="nota">Faixa sombreada = intervalo de ~80% de confiança</div>
+    <div class="grafico alto"><canvas id="gProj"></canvas></div></div>
+  <div class="cartao col2"><h3>Sazonalidade estimada (índice, janeiro = 100)</h3><div class="nota">Quanto cada mês vende por dia em relação a janeiro, já descontada a tendência</div><div class="grafico baixo"><canvas id="gSaz"></canvas></div></div>
+  <div class="cartao"><h3>Projeção mês a mês</h3><table><tr><th>Mês</th><th class="n">Pessimista</th><th class="n">Base</th><th class="n">Otimista</th></tr>
+    {% for r in proj %}<tr><td>{{ rotulo_mes(r.competencia) }}</td><td class="n">{{ r.inferior|brl(0) }}</td><td class="n"><b>{{ r.receita|brl(0) }}</b></td><td class="n">{{ r.superior|brl(0) }}</td></tr>{% endfor %}</table></div>
+  <div class="cartao"><h3>Backtest: projetado × realizado</h3><div class="nota">Como o modelo teria se saído nos últimos 6 meses</div>
+    <table><tr><th>Mês</th><th class="n">Projetado</th><th class="n">Realizado</th><th class="n">Erro</th></tr>
+    {% for r in bt %}<tr><td>{{ rotulo_mes(r.competencia) }}</td><td class="n">{{ r.receita|brl(0) }}</td><td class="n">{{ r.real|brl(0) }}</td><td class="n">{{ r.erro_pct|pct(1, true) }}</td></tr>{% endfor %}</table></div>
+</div>
+
+{% if base %}<h2 style="font-size:18px;margin:26px 0 4px">Simulador de DRE projetada</h2>
+<div class="muted" style="margin-bottom:12px">Premissas-base extraídas dos últimos 12 meses fechados ({{ rotulo_mes(base.competencias[0]) }} a {{ rotulo_mes(base.competencias[-1]) }}). Mova os controles para testar cenários.</div>
+<div class="grade g2">
+  <div class="cartao">
+    <h3>Premissas</h3>
+    <div class="form-grade" style="grid-template-columns:1fr">
+      <div class="campo"><label>Volume de vendas vs. projeção base</label><div class="slider"><input type="range" id="vol" min="-20" max="20" step="1" value="0"><output id="o_vol"></output></div></div>
+      <div class="campo"><label>Variação da margem bruta (p.p.)</label><div class="slider"><input type="range" id="mg" min="-3" max="3" step="0.1" value="0"><output id="o_mg"></output></div></div>
+      <div class="campo"><label>Perdas (% do faturamento)</label><div class="slider"><input type="range" id="per" min="0.5" max="4" step="0.1"><output id="o_per"></output></div></div>
+      <div class="campo"><label>Dissídio salarial a partir de maio</label><div class="slider"><input type="range" id="dis" min="0" max="12" step="0.5" value="5"><output id="o_dis"></output></div></div>
+      <div class="campo"><label>Variação do quadro de funcionários</label><div class="slider"><input type="range" id="hc" min="-8" max="10" step="1" value="0"><output id="o_hc"></output></div></div>
+      <div class="campo"><label>Inflação das despesas fixas (ao ano)</label><div class="slider"><input type="range" id="inf" min="0" max="12" step="0.5" value="4.5"><output id="o_inf"></output></div></div>
+    </div>
+    <button class="mt" onclick="resetar()">Voltar ao cenário base</button>
+  </div>
+  <div class="cartao">
+    <h3>Resultado do cenário</h3>
+    <div class="grade g2" id="kpisSim"></div>
+    <div class="grafico baixo mt"><canvas id="gSim"></canvas></div>
+  </div>
+</div>
+<div class="cartao mt"><h3>DRE projetada</h3><div class="tabela-wrap"><table id="tabSim"></table></div></div>
+{% endif %}
+{% endblock %}
+{% block scripts %}<script>
+const g = {{ g|tojson }};
+VV.grafico('gProj', g.meses, [
+  {nome: 'Realizado', dados: g.real, slot: 0},
+  {nome: 'Projeção', dados: g.proj, slot: 0, tracejado: true, tipo: 'line'},
+  {nome: '_sup', dados: g.sup, cor: 'rgba(42,120,214,0)', fundo: 'rgba(42,120,214,.13)', tipo: 'line', preencher: '+1'},
+  {nome: '_inf', dados: g.inf, cor: 'rgba(42,120,214,0)', tipo: 'line'},
+], {tipo: 'line', fmt: 'brl', min: 0});
+
+const S = {{ sim|safe }};
+VV.grafico('gSaz', g.saz, [{nome: 'Índice sazonal', dados: g.saz_v, slot: 0}], {fmt: 'num', legenda: false, min: 80});
+const B = S.base;
+const hcAtual = S.hc || 1;
+const ids = ['vol', 'mg', 'per', 'dis', 'hc', 'inf'];
+const padrao = {vol: 0, mg: 0, per: B ? +(B.perdas_pct * 100).toFixed(1) : 2, dis: 5, hc: 0, inf: 4.5};
+let gSim = null;
+function resetar() { ids.forEach(i => document.getElementById(i).value = padrao[i]); calc(); }
+function calc() {
+  const v = {}; ids.forEach(i => v[i] = +document.getElementById(i).value);
+  const fmtO = {vol: x => (x > 0 ? '+' : '') + x + '%', mg: x => (x > 0 ? '+' : '') + x.toFixed(1), per: x => x.toFixed(1) + '%',
+                dis: x => x.toFixed(1) + '%', hc: x => (x > 0 ? '+' : '') + x, inf: x => x.toFixed(1) + '%'};
+  ids.forEach(i => document.getElementById('o_' + i).textContent = fmtO[i](v[i]));
+  const custoFunc = B.folha_mes / hcAtual;
+  const cmvPct = B.cmv_pct - v.mg / 100;
+  let passouMaio = false;
+  const L = {outras: [], rec: [], ded: [], cmv: [], per: [], cons: [], folha: [], vari: [], fixas: [], dep: [], lair: [], ir: [], ll: [], pe: []};
+  S.comps.forEach((c, k) => {
+    if (c.slice(5) === '05') passouMaio = true;
+    const rec = S.receita[k] * (1 + v.vol / 100);
+    const ded = rec * (B.desconto_pct + B.impostos_pct);
+    const cmv = rec * cmvPct, per = rec * v.per / 100, cons = rec * B.consumo_pct, vari = rec * B.variaveis_pct;
+    const folha = (B.folha_mes + v.hc * custoFunc) * (passouMaio ? 1 + v.dis / 100 : 1);
+    const fixas = B.fixas_mes * Math.pow(1 + v.inf / 100, (k + 1) / 12);
+    const dep = B.depreciacao_mes;
+    const outras = rec * (B.outras_receitas_pct || 0);
+    const lair = rec + outras - ded - cmv - per - cons - folha - vari - fixas - dep;
+    const ir = Math.max(lair, 0) * B.ir_pct;
+    const mc = 1 + (B.outras_receitas_pct || 0) - B.desconto_pct - B.impostos_pct - cmvPct - v.per / 100 - B.consumo_pct - B.variaveis_pct;
+    Object.entries({outras, rec, ded, cmv, per, cons, folha, vari, fixas, dep, lair, ir, ll: lair - ir, pe: (folha + fixas + dep) / mc})
+      .forEach(([kk, x]) => L[kk].push(x));
+  });
+  const soma = a => a.reduce((x, y) => x + y, 0);
+  const tot = {}; Object.keys(L).forEach(k => tot[k] = soma(L[k]));
+  const meses = S.comps.length;
+  const anual = x => x * 12 / meses;
+  const kp = [
+    ['Faturamento', VV.compacto(tot.rec), `${meses} meses`],
+    ['Lucro líquido', VV.compacto(tot.ll), `margem ${VV.fmtNum(2).format(tot.ll / tot.rec * 100)}% · últimos 12m reais: ${VV.compacto(B.lucro_12m)}`],
+    ['Ponto de equilíbrio médio', VV.compacto(tot.pe / meses) + '/mês', `faturamento mínimo para lucro zero`],
+    ['Margem de segurança', VV.fmtNum(1).format((1 - tot.pe / tot.rec) * 100) + '%', 'quanto as vendas podem cair até o prejuízo'],
+  ];
+  document.getElementById('kpisSim').innerHTML = kp.map(([a, b, c]) => `<div class="kpi"><div class="rot">${a}</div><div class="val">${b}</div><div class="det">${c}</div></div>`).join('');
+  const linhas = [['Faturamento', 'rec', 1], ['(+) Royalties e margem dos CDs', 'outras', 1], ['(-) Descontos e impostos s/ vendas', 'ded', -1], ['(-) CMV', 'cmv', -1], ['(-) Perdas', 'per', -1], ['(-) Consumo interno', 'cons', -1],
+    ['(-) Folha e encargos', 'folha', -1], ['(-) Despesas variáveis', 'vari', -1], ['(-) Despesas fixas', 'fixas', -1], ['(-) Depreciação', 'dep', -1],
+    ['= Lucro antes do IR', 'lair', 1, 'sub'], ['(-) IR/CSLL', 'ir', -1], ['= Lucro líquido', 'll', 1, 'total'], ['Ponto de equilíbrio (faturamento)', 'pe', 1]];
+  const f0 = x => VV.fmtNum(0).format(x);
+  let h = '<tr><th style="min-width:240px">Linha</th>' + S.rotulos.map(r => `<th class="n">${r}</th>`).join('') + '<th class="n">Total</th></tr>';
+  linhas.forEach(([rot, k, s, cls]) => {
+    h += `<tr class="${cls || ''}"><td>${rot}</td>` + L[k].map(x => `<td class="n ${s * x < 0 && cls ? 'neg' : ''}">${f0(s * x)}</td>`).join('') +
+         `<td class="n">${k === 'pe' ? f0(tot.pe / meses) + ' /mês' : f0(s * tot[k])}</td></tr>`;
+  });
+  document.getElementById('tabSim').innerHTML = h;
+  if (gSim) gSim.destroy();
+  gSim = VV.grafico('gSim', S.rotulos, [
+    {nome: 'Lucro líquido', dados: L.ll.map(x => Math.round(x)), cores: L.ll.map(x => x < 0 ? VV.status.critico : VV.cores[2])}], {fmt: 'brl', legenda: false});
+}
+if (S.base) { ids.forEach(i => document.getElementById(i).addEventListener('input', calc)); resetar(); }
+</script>{% endblock %}

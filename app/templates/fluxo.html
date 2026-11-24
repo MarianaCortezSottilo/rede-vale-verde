@@ -1,0 +1,33 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}
+{% block titulo %}Fluxo de caixa{% endblock %}
+{% block conteudo %}
+<div class="topo"><div><h1>Fluxo de caixa</h1>
+  <div class="sub"><b>{{ un_rotulo }}</b> · regime de caixa: vendas entram quando o dinheiro cai (débito D+1, crédito e voucher D+30); saídas pela data de pagamento dos títulos.</div></div>
+  <div class="filtros">{{ m.botao_excel() }}</div></div>
+<div class="grade g4">
+  {{ m.kpi('Saldo atual de caixa', saldo0|mil, 'saldo inicial de referência + movimento do período') }}
+  {{ m.kpi('A receber (60 dias)', receber|mil, 'cartões/vouchers já vendidos e títulos da rede') }}
+  {{ m.kpi('A pagar (60 dias)', pagar|mil, 'títulos em aberto, incluindo vencidos') }}
+  {{ m.kpi('Saldo projetado em 60 dias', proj[-1].saldo|mil, 'sem considerar novas vendas') }}
+</div>
+<div class="grade g2 mt">
+  <div class="cartao"><h3>Entradas × saídas por mês</h3><div class="grafico"><canvas id="gES"></canvas></div></div>
+  <div class="cartao"><h3>Saldo acumulado de caixa</h3><div class="grafico"><canvas id="gSaldo"></canvas></div></div>
+  <div class="cartao col2"><h3>Projeção dos próximos 60 dias (apenas compromissos já existentes)</h3>
+    <div class="nota">Mostra a pressão de caixa dos títulos já emitidos; as vendas futuras ainda não estão aqui — use a tela de projeções.</div>
+    <div class="grafico baixo"><canvas id="gProj"></canvas></div></div>
+</div>
+<div class="cartao mt"><h3>Realizado por mês</h3><div class="tabela-wrap"><table>
+  <tr><th>Mês</th><th class="n">Recebimento de vendas</th><th class="n">Recebido da rede</th><th class="n">Fornecedores</th><th class="n">Transf. CD</th><th class="n">Folha</th><th class="n">Encargos</th><th class="n">Impostos</th><th class="n">Royalties/fundo</th><th class="n">Despesas</th><th class="n">Saldo do mês</th><th class="n">Saldo acumulado</th></tr>
+  {% for r in t %}<tr><td>{{ rotulo_mes(r.competencia) }}</td><td class="n">{{ r.entradas_vendas|num }}</td><td class="n">{{ r.entradas_rede|num }}</td><td class="n neg">{{ r.saida_compra|num }}</td><td class="n neg">{{ r.saida_transferencia|num }}</td><td class="n neg">{{ r.saida_folha|num }}</td>
+    <td class="n neg">{{ r.saida_encargos|num }}</td><td class="n neg">{{ r.saida_impostos|num }}</td><td class="n neg">{{ r.saida_franquia|num }}</td><td class="n neg">{{ r.saida_despesa|num }}</td>
+    <td class="n {{ 'neg' if r.saldo_mes < 0 }}">{{ r.saldo_mes|num }}</td><td class="n">{{ r.saldo_acumulado|num }}</td></tr>{% endfor %}
+</table></div>
+<p class="muted">"Recebido da rede" = pagamentos de franqueados à franqueadora (transferências dos CDs, royalties e fundo) e taxas iniciais de franquia. Pagamentos entre unidades da própria seleção são eliminados. Saldo inicial de referência: R$ 450 mil por unidade.</p></div>
+{% endblock %}
+{% block scripts %}<script>
+const g = {{ g|tojson }};
+VV.grafico('gES', g.meses, [{nome: 'Entradas', dados: g.ent, slot: 0}, {nome: 'Saídas', dados: g.sai, slot: 1}], {fmt: 'brl'});
+VV.grafico('gSaldo', g.meses, [{nome: 'Saldo acumulado', dados: g.saldo, slot: 0, pontos: 3}], {tipo: 'line', fmt: 'brl', legenda: false});
+VV.grafico('gProj', g.dias, [{nome: 'Saldo projetado', dados: g.psaldo, slot: 0}], {tipo: 'line', fmt: 'brl', legenda: false, min: Math.min(0, ...g.psaldo)});
+</script>{% endblock %}

@@ -1,0 +1,37 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}
+{% block titulo %}Compras{% endblock %}
+{% block conteudo %}
+<div class="topo">
+  <div><h1>Pedidos de compra</h1><div class="sub">{{ un_rotulo }} · {{ n }} pedidos no filtro (em aberto aparecem sempre). CDs compram de fornecedores nacionais; lojas compram perecíveis de fornecedores regionais e o resto recebem do CD.</div></div>
+  <div class="filtros"><a class="btn btn-primario" href="{{ url_for('com.novo_pedido') }}">+ Novo pedido</a></div>
+</div>
+{% set extra %}
+<select name="status"><option value="">Todos os status</option>{% for s in ['ABERTO','RECEBIDO','RECEBIDO_PARCIAL'] %}<option value="{{ s }}" {{ 'selected' if s == status }}>{{ s|replace('_',' ')|capitalize }}</option>{% endfor %}</select>
+<select name="fornecedor"><option value="">Todos os fornecedores</option>{% for f in fornecedores %}<option value="{{ f.id }}" {{ 'selected' if f.id|string == forn }}>{{ f.nome_fantasia }}</option>{% endfor %}</select>
+{% endset %}
+<div class="cartao">{{ m.filtro_periodo(ci, cf, extra) }}</div>
+<div class="grade g2 mt">
+  <div class="cartao">
+    <h3>Compras recebidas por mês</h3><div class="nota">Valor das notas recebidas</div>
+    <div class="grafico baixo"><canvas id="gCompras"></canvas></div>
+  </div>
+  <div class="cartao">
+    <h3>Desempenho dos fornecedores no período</h3>
+    <div class="rolagem" style="max-height:230px"><table>
+      <tr><th>Fornecedor</th><th class="n">Pedidos</th><th class="n">Valor</th><th class="n">Distância</th><th class="n">Prazo real (dias)</th><th class="n">% entregas parciais</th></tr>
+      {% for r in por_forn %}<tr><td>{{ r.fornecedor }}</td><td class="n">{{ r.pedidos }}</td><td class="n">{{ r.valor|brl }}</td><td class="n">{{ r.km|num }} km</td><td class="n">{{ r.lead_real|num(1) }}</td><td class="n">{{ r.pct_parcial|pct }}</td></tr>{% endfor %}
+    </table></div>
+  </div>
+</div>
+<div class="cartao mt">
+  <div class="rolagem"><table>
+    <tr><th>Pedido</th><th>Unidade</th><th>Fornecedor</th><th>Pedido em</th><th>Previsto</th><th>Recebido</th><th class="n">Itens</th><th class="n">Valor</th><th>Status</th><th>Comprador</th></tr>
+    {% for p in pedidos %}<tr><td><a href="{{ url_for('com.pedido', pid=p.id) }}">PC-{{ '%06d'|format(p.id) }}</a></td><td>{{ p.unidade }}</td><td>{{ p.fornecedor }}</td><td>{{ p.data_pedido|data_br }}</td>
+      <td>{{ p.data_prevista|data_br }}</td><td>{{ p.data_recebimento|data_br }}</td><td class="n">{{ p.linhas }}</td><td class="n">{{ p.valor_total|brl }}</td><td>{{ m.status_titulo(p.status) }}</td><td>{{ p.comprador or '–' }}</td></tr>{% endfor %}
+  </table></div>
+</div>
+{% endblock %}
+{% block scripts %}<script>
+const g = {{ g|tojson }};
+VV.grafico('gCompras', g.meses, [{nome: 'Compras', dados: g.valor, slot: 0}], {fmt: 'brl', legenda: false});
+</script>{% endblock %}

@@ -1,0 +1,100 @@
+table fDRE
+	lineageTag: e2707590-57bb-4ee4-a292-2d3022efad57
+
+	/// Competência (1º dia do mês).
+	column Data
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 884065f9-6bc0-49fa-96ec-26bbb3bd1242
+		summarizeBy: none
+		sourceColumn: Data
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	/// Unidade. Royalties e margem dos CDs aparecem como receita da franqueadora e custo das lojas.
+	column UnidadeID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 261386fc-3218-4ec0-a38c-d04d800fb677
+		summarizeBy: none
+		sourceColumn: UnidadeID
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Posição da linha na DRE (1 a 25). Use para ordenar Linha.
+	column Ordem
+		dataType: int64
+		formatString: 0
+		lineageTag: 9792e8bc-67d0-4f55-94a1-9a6469dce7cc
+		summarizeBy: sum
+		sourceColumn: Ordem
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Código fixo da linha (receita_bruta, cmv, ebitda, lucro_liquido...). Use nas medidas DAX.
+	column Chave
+		dataType: string
+		lineageTag: 0932f584-081e-42e3-9e26-40bea543b141
+		summarizeBy: none
+		sourceColumn: Chave
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Descrição da linha como aparece no relatório. Ordenar por Ordem.
+	column Linha
+		dataType: string
+		lineageTag: 7ba60a4d-26fb-459c-854f-012cc46dea8a
+		summarizeBy: none
+		sourceColumn: Linha
+		sortByColumn: Ordem
+
+		changedProperty = SortByColumn
+
+		annotation SummarizationSetBy = Automatic
+
+	/// 0 = receita bruta, 1 = linha de detalhe (+/−), 2 = subtotal (=), 3 = lucro líquido. Use para formatação condicional.
+	column Nivel
+		dataType: int64
+		formatString: 0
+		lineageTag: 504aecdc-c00f-4d4d-9b04-64585c557e47
+		summarizeBy: sum
+		sourceColumn: Nivel
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Valor da linha, em R$. Receitas e subtotais positivos, deduções negativas.
+	column Valor
+		dataType: double
+		lineageTag: 2759cf0f-84d2-4b5f-9b29-6661d5424970
+		summarizeBy: sum
+		sourceColumn: Valor
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column LinhaCurta = SWITCH ( fDRE[Chave], "receita_bruta", "Receita bruta", "descontos", "Descontos", "receitas_franquia", "Receitas franquia", "margem_distribuicao", "Margem CDs", "impostos_vendas", "Impostos", "receita_liquida", "Receita líquida", "cmv", "CMV", "lucro_bruto", "Lucro bruto", "perdas", "Perdas", "consumo_interno", "Consumo interno", "margem_operacional", "Margem após perdas", "pessoal_folha", "Folha", "pessoal_outros", "Outros pessoal", "ocupacao", "Ocupação", "utilidades", "Utilidades", "administrativas", "Administrativas", "comerciais", "Comerciais", "franquia", "Royalties pagos", "logistica", "Logística", "ebitda", "EBITDA", "depreciacao", "Depreciação", "financeiras", "Financeiras", "lair", "LAIR", "ir_csll", "IR/CSLL", "lucro_liquido", "Lucro líquido", fDRE[Linha] )
+		dataType: string
+		lineageTag: 12006c72-3568-407f-bcb9-0a76dd101d6f
+		summarizeBy: none
+		sortByColumn: Ordem
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fDRE = m
+		mode: import
+		source =
+				let
+				  Origem = Csv.Document(File.Contents("C:\Users\macor\OneDrive\Documentos\Vale Verde\mercado_vale_verde\powerbi\dados\fDRE.csv"), [Delimiter = ";", Columns = 7, Encoding = 65001, QuoteStyle = QuoteStyle.None]),
+				  #"Cabeçalhos promovidos" = Table.PromoteHeaders(Origem, [PromoteAllScalars = true]),
+				  #"Tipo de coluna alterado" = Table.TransformColumnTypes(#"Cabeçalhos promovidos", {{"Data", type date}, {"UnidadeID", Int64.Type}, {"Ordem", Int64.Type}, {"Chave", type text}, {"Linha", type text}, {"Nivel", Int64.Type}, {"Valor", type number}})
+				in
+				  #"Tipo de coluna alterado"
+
+	annotation PBI_ResultType = Table
+

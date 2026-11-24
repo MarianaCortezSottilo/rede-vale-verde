@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block titulo %}Movimentar estoque{% endblock %}
+{% block conteudo %}
+<div class="topo"><div><h1>Lançar movimentação de estoque</h1><div class="sub">Consumo interno, perda/quebra ou ajuste de inventário. Valorizado pelo custo médio atual da unidade.</div></div>
+  <form class="filtros"><label>Unidade</label><select name="unidade_id" onchange="this.form.submit()"><option value="">— escolha —</option>{% for u in unidades %}<option value="{{ u.id }}" {{ 'selected' if u.id == uid }}>{{ u.codigo }} · {{ u.nome }}</option>{% endfor %}</select><input type="hidden" name="tipo" value="{{ tipo }}"></form></div>
+{% if not uid %}<div class="cartao"><p class="muted">Escolha a unidade.</p></div>{% else %}
+<div class="cartao" style="max-width:900px">
+<form method="post" class="form-grade"><input type="hidden" name="unidade_id" value="{{ uid }}">
+  <div class="campo" style="grid-column:1/-1"><label>Produto</label>
+    <select name="produto_id" required>{% for p in produtos %}<option value="{{ p.id }}">{{ p.descricao }} (estoque {{ p.quantidade|num(3 if p.unidade=='KG' else 0) }} {{ p.unidade|lower }})</option>{% endfor %}</select></div>
+  <div class="campo"><label>Tipo</label><select name="tipo">
+    <option value="CONSUMO_INTERNO" {{ 'selected' if tipo=='CONSUMO_INTERNO' }}>Consumo interno</option>
+    <option value="PERDA" {{ 'selected' if tipo=='PERDA' }}>Perda / quebra</option>
+    <option value="AJUSTE_INVENTARIO" {{ 'selected' if tipo=='AJUSTE_INVENTARIO' }}>Ajuste de inventário</option></select></div>
+  <div class="campo"><label>Sentido (só p/ ajuste)</label><select name="sentido"><option value="saida">Saída</option><option value="entrada">Entrada</option></select></div>
+  <div class="campo"><label>Quantidade</label><input type="text" name="quantidade" required></div>
+  <div class="campo"><label>Data</label><input type="date" name="data" value="{{ hoje_iso }}"></div>
+  <div class="campo"><label>Motivo</label><input type="text" name="motivo" list="motivos">
+    <datalist id="motivos"><option>Copa/refeitório</option><option>Limpeza da loja</option><option>Degustação/ação promocional</option><option>Vencimento/deterioração</option><option>Avaria</option><option>Furto/desvio</option><option>Inventário rotativo</option></datalist></div>
+  <div class="campo"><label>Departamento</label><select name="departamento_id"><option value="">—</option>{% for d in deps %}<option value="{{ d.id }}">{{ d.nome }}</option>{% endfor %}</select></div>
+  <div class="campo"><label>&nbsp;</label><button class="btn-primario">Lançar</button></div>
+</form></div>{% endif %}
+{% endblock %}

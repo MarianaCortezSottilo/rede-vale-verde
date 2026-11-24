@@ -1,0 +1,21 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}
+{% block titulo %}Consumo interno{% endblock %}
+{% block conteudo %}
+<div class="topo"><div><h1>Consumo interno</h1><div class="sub">Materiais e mercadorias usados pela própria loja (sacolas, bobinas, embalagens, limpeza, copa, degustação)</div></div>
+  <div class="filtros">{{ m.filtro_periodo(ci, cf) }}<a class="btn" href="{{ url_for('com.movimentar', tipo='CONSUMO_INTERNO') }}">+ Lançar</a></div></div>
+<div class="grade g2">
+  <div class="cartao col2"><h3>Consumo interno por mês · total {{ total|brl }}</h3><div class="grafico baixo"><canvas id="gCons"></canvas></div></div>
+  {% if por_un|length > 1 %}<div class="cartao col2"><h3>Por unidade</h3><table><tr><th>Unidade</th><th class="n">Valor</th><th class="n">%</th></tr>
+    {% for k, v in por_un %}<tr><td>{{ k }}</td><td class="n">{{ v|brl }}</td><td class="n">{{ (v/total)|pct }}</td></tr>{% endfor %}</table></div>{% endif %}
+  <div class="cartao"><h3>Por departamento</h3><table><tr><th>Departamento</th><th class="n">Valor</th><th class="n">%</th></tr>
+    {% for k, v in por_dep %}<tr><td>{{ k }}</td><td class="n">{{ v|brl }}</td><td class="n">{{ (v/total)|pct }}</td></tr>{% endfor %}</table></div>
+  <div class="cartao"><h3>Por finalidade</h3><table><tr><th>Finalidade</th><th class="n">Valor</th><th class="n">%</th></tr>
+    {% for k, v in por_mot %}<tr><td>{{ k }}</td><td class="n">{{ v|brl }}</td><td class="n">{{ (v/total)|pct }}</td></tr>{% endfor %}</table></div>
+  <div class="cartao col2"><h3>Itens consumidos</h3><div class="rolagem"><table><tr><th>Item</th><th class="n">Quantidade</th><th class="n">Valor</th></tr>
+    {% for r in itens %}<tr><td>{{ r.descricao }}</td><td class="n">{{ r.quantidade|num(1) }}</td><td class="n">{{ r.valor|brl }}</td></tr>{% endfor %}</table></div></div>
+</div>
+{% endblock %}
+{% block scripts %}<script>
+const g = {{ g|tojson }};
+VV.grafico('gCons', g.meses, [{nome: 'Consumo interno', dados: g.valor, slot: 2}], {fmt: 'brl', legenda: false});
+</script>{% endblock %}

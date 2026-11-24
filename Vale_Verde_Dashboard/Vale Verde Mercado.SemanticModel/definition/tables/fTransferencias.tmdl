@@ -1,0 +1,156 @@
+table fTransferencias
+	lineageTag: c1963d15-d65a-4698-b2ee-4c763c83f754
+
+	/// Número da transferência. Não resumir.
+	column TransferenciaID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 3f356e41-29e5-4f8d-b72f-21345223cbc7
+		summarizeBy: count
+		sourceColumn: TransferenciaID
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	/// CD que enviou a mercadoria.
+	column CDID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 9da75bd0-5b0c-4a1c-ac8b-ff820f2fc041
+		summarizeBy: count
+		sourceColumn: CDID
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Loja que recebeu.
+	column UnidadeID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: d57ab5f4-17c4-48d3-8aae-d68cacad6af0
+		summarizeBy: none
+		sourceColumn: UnidadeID
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Data de envio pelo CD.
+	column Data
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 0f951b21-d1ce-489a-9254-38eff0aa3552
+		summarizeBy: none
+		sourceColumn: Data
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	/// Data em que a loja recebeu. Vazio se ainda em trânsito.
+	column DataRecebimento
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: ba286329-6172-4fda-bf30-d2beecf23c91
+		summarizeBy: none
+		sourceColumn: DataRecebimento
+
+		variation Variação
+			isDefault
+			relationship: 36df97e0-5b9c-4c02-9c63-1129a620b170
+			defaultHierarchy: LocalDateTable_42a55fbf-6b6c-47ae-9c34-50897f0cc9c9.'Hierarquia de datas'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	/// RECEBIDA, RECEBIDA_PARCIAL ou EM_TRANSITO.
+	column Status
+		dataType: string
+		lineageTag: 54c44466-f1bf-42c8-87d6-aac27e08a57f
+		summarizeBy: none
+		sourceColumn: Status
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Custo da mercadoria para o CD, em R$.
+	column CustoCD
+		dataType: double
+		lineageTag: 910e423c-d97f-4d85-a69a-ed27233ddec7
+		summarizeBy: sum
+		sourceColumn: CustoCD
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// Valor cobrado da loja (custo de referência + 1%), em R$. A diferença para CustoCD é a margem do CD.
+	column ValorTransferencia
+		dataType: double
+		lineageTag: 95e336f0-44ac-485e-8500-ca15a2989e67
+		summarizeBy: sum
+		sourceColumn: ValorTransferencia
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// Distância rodoviária CD → loja, em km.
+	column DistanciaKm
+		dataType: double
+		lineageTag: e382eb80-ab54-409d-9cce-54d075dafbb4
+		summarizeBy: sum
+		sourceColumn: DistanciaKm
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// Caminhões necessários (até R$ 150 mil de carga por viagem).
+	column Viagens
+		dataType: int64
+		formatString: 0
+		lineageTag: 095c8d90-db0a-4dad-900f-f35262a83151
+		summarizeBy: sum
+		sourceColumn: Viagens
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Custo do frete, em R$ (R$ 400 por viagem + R$ 3,80 por km).
+	column Frete
+		dataType: double
+		lineageTag: 34c9013e-6bd8-4f5e-b83e-f9a58fab80c9
+		summarizeBy: sum
+		sourceColumn: Frete
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// Dias entre envio e recebimento.
+	column LeadTimeDias
+		dataType: int64
+		formatString: 0
+		lineageTag: c3ec1b8f-9ab1-4a5c-b737-14fa68be91e5
+		summarizeBy: sum
+		sourceColumn: LeadTimeDias
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fTransferencias = m
+		mode: import
+		source =
+				let
+				  Origem = Csv.Document(File.Contents("C:\Users\macor\OneDrive\Documentos\Vale Verde\mercado_vale_verde\powerbi\dados\fTransferencias.csv"), [Delimiter = ";", Columns = 12, Encoding = 65001, QuoteStyle = QuoteStyle.None]),
+				  #"Cabeçalhos promovidos" = Table.PromoteHeaders(Origem, [PromoteAllScalars = true]),
+				  #"Tipo de coluna alterado" = Table.TransformColumnTypes(#"Cabeçalhos promovidos", {{"TransferenciaID", Int64.Type}, {"CDID", Int64.Type}, {"UnidadeID", Int64.Type}, {"Data", type date}, {"DataRecebimento", type date}, {"Status", type text}, {"CustoCD", type number}, {"ValorTransferencia", type number}, {"DistanciaKm", type number}, {"Viagens", Int64.Type}, {"Frete", type number}, {"LeadTimeDias", Int64.Type}})
+				in
+				  #"Tipo de coluna alterado"
+
+	annotation PBI_ResultType = Table
+

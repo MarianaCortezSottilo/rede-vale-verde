@@ -1,0 +1,118 @@
+table fContasPagar
+	lineageTag: 7e2ff255-198f-440a-aef2-298a3f973ee4
+
+	column UnidadeID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: a81f8b3a-7074-48a1-b6d7-7e65ad1785b1
+		summarizeBy: none
+		sourceColumn: UnidadeID
+
+		annotation SummarizationSetBy = Automatic
+
+	column Origem
+		dataType: string
+		lineageTag: e976b88f-ceb2-4d91-bb2a-ab2d340fc712
+		summarizeBy: none
+		sourceColumn: Origem
+
+		annotation SummarizationSetBy = Automatic
+
+	column Favorecido
+		dataType: string
+		lineageTag: 5a78f1d2-6027-41fa-b0fd-cbb8edfeb1f6
+		summarizeBy: none
+		sourceColumn: Favorecido
+
+		annotation SummarizationSetBy = Automatic
+
+	column Emissao
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: 838a8030-bf42-4894-9e01-3ebfbbfad3c2
+		summarizeBy: none
+		sourceColumn: Emissao
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Vencimento
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: 3c71d5b8-3104-41c5-9d7d-e11199a80e87
+		summarizeBy: none
+		sourceColumn: Vencimento
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Pagamento
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: 0df83717-2004-4204-8fd2-40e3d201d117
+		summarizeBy: none
+		sourceColumn: Pagamento
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Status
+		dataType: string
+		lineageTag: 11142ad1-e5c4-4a8b-bff4-cb6ee6d88a18
+		summarizeBy: none
+		sourceColumn: Status
+
+		annotation SummarizationSetBy = Automatic
+
+	column Valor
+		dataType: double
+		lineageTag: fa339d14-eb3b-4545-8006-53ae16fe9f9d
+		summarizeBy: sum
+		sourceColumn: Valor
+
+		annotation SummarizationSetBy = Automatic
+
+	column DiasParaVencer
+		dataType: int64
+		formatString: 0
+		lineageTag: 75ecc14c-8620-4f5c-a49b-56911147ab6a
+		summarizeBy: none
+		sourceColumn: DiasParaVencer
+
+		annotation SummarizationSetBy = Automatic
+
+	column Faixa
+		dataType: string
+		lineageTag: 17e2af65-ac5d-467c-85c0-ec266ace7aef
+		summarizeBy: none
+		sourceColumn: Faixa
+		sortByColumn: FaixaOrdem
+
+		annotation SummarizationSetBy = Automatic
+
+	column FaixaOrdem
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 0535c0cd-41af-474f-8325-21a0114aa297
+		summarizeBy: none
+		sourceColumn: FaixaOrdem
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fContasPagar = m
+		mode: import
+		source =
+				let
+				  Origem = Csv.Document(File.Contents("C:\Users\macor\OneDrive\Documentos\Vale Verde\mercado_vale_verde\powerbi\dados\fContasPagar.csv"), [Delimiter = ";", Columns = 11, Encoding = 65001, QuoteStyle = QuoteStyle.None]),
+				  #"Cabeçalhos promovidos" = Table.PromoteHeaders(Origem, [PromoteAllScalars = true]),
+				  #"Tipo de coluna alterado" = Table.TransformColumnTypes(#"Cabeçalhos promovidos", {{"UnidadeID", Int64.Type}, {"Origem", type text}, {"Favorecido", type text}, {"Emissao", type date}, {"Vencimento", type date}, {"Pagamento", type date}, {"Status", type text}, {"Valor", type number}, {"DiasParaVencer", Int64.Type}, {"Faixa", type text}, {"FaixaOrdem", Int64.Type}}, "pt-BR")
+				in
+				  #"Tipo de coluna alterado"
+
+	annotation PBI_ResultType = Table
+

@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block titulo %}Admitir{% endblock %}
+{% block conteudo %}
+<div class="topo"><div><h1>Admitir funcionário</h1><div class="sub">O salário sugerido é o da última admissão no cargo naquela unidade (o piso varia por região)</div></div></div>
+<div class="cartao" style="max-width:900px"><form method="post" class="form-grade">
+  <div class="campo" style="grid-column:1/-1"><label>Nome completo</label><input type="text" name="nome" required></div>
+  <div class="campo"><label>CPF</label><input type="text" name="cpf" placeholder="999.000.000-00"></div>
+  <div class="campo"><label>Nascimento</label><input type="date" name="data_nascimento"></div>
+  <div class="campo"><label>Sexo</label><select name="sexo"><option>F</option><option>M</option></select></div>
+  <div class="campo"><label>Unidade</label><select name="unidade_id" id="unid" onchange="piso()">{% for u in unidades_form %}<option value="{{ u.id }}" data-tipo="{{ u.tipo }}" {{ 'selected' if u.id == uid }}>{{ u.codigo }} · {{ u.nome }}</option>{% endfor %}</select></div>
+  <div class="campo"><label>Cargo</label><select name="cargo_id" id="cargo" onchange="piso(true)">{% for c in cargos %}<option value="{{ c.id }}" data-tipo="{{ c.tipo_unidade }}" data-base="{{ c.salario_base }}">{{ c.departamento }} · {{ c.nome }}</option>{% endfor %}</select></div>
+  <div class="campo"><label>Contrato</label><select name="tipo_contrato"><option>CLT</option><option>TEMPORARIO</option><option>JOVEM_APRENDIZ</option><option>ESTAGIO</option></select></div>
+  <div class="campo"><label>Turno</label><select name="turno"><option>MANHA</option><option>TARDE</option><option>COMERCIAL</option></select></div>
+  <div class="campo"><label>Salário (R$)</label><input type="text" name="salario" id="salario" required></div>
+  <div class="campo"><label>Admissão</label><input type="date" name="data_admissao" value="{{ hoje_iso }}" required></div>
+  <div class="campo"><label>&nbsp;</label><label><input type="checkbox" name="vt" checked> Usa vale-transporte</label></div>
+  <div class="campo"><label>&nbsp;</label><button class="btn-primario">Admitir</button></div>
+</form></div>
+{% endblock %}
+{% block scripts %}<script>
+const pisos = {{ pisos|tojson }};
+function piso(soCargo) {
+  const u = document.getElementById('unid'), c = document.getElementById('cargo'), tipo = u.options[u.selectedIndex].dataset.tipo;
+  [...c.options].forEach(o => o.hidden = o.dataset.tipo !== tipo);
+  if (!soCargo && c.options[c.selectedIndex].hidden) c.value = [...c.options].find(o => !o.hidden).value;
+  const k = u.value + '-' + c.value, o = c.options[c.selectedIndex];
+  document.getElementById('salario').value = (pisos[k] || +o.dataset.base || 0).toFixed(2);
+}
+piso();
+</script>{% endblock %}

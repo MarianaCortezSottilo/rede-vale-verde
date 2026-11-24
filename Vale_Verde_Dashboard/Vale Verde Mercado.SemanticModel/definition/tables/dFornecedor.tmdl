@@ -1,0 +1,114 @@
+table dFornecedor
+	lineageTag: 5df2e138-27be-47bd-9360-554a82b89e88
+
+	/// Identificador do fornecedor.
+	column FornecedorID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 6f739926-b4ed-4666-863b-f7b0ee818193
+		summarizeBy: none
+		sourceColumn: FornecedorID
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Nome fantasia.
+	column Fornecedor
+		dataType: string
+		lineageTag: a821e43d-9dd8-40e4-a837-0f40c4323fd7
+		summarizeBy: none
+		sourceColumn: Fornecedor
+
+		annotation SummarizationSetBy = Automatic
+
+	/// NACIONAL (vende para os CDs) ou REGIONAL (vende para as lojas de uma região).
+	column Abrangencia
+		dataType: string
+		lineageTag: 7f5b7118-cf65-47f9-a92d-7c5e4d2eae9c
+		summarizeBy: none
+		sourceColumn: Abrangencia
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Região que o fornecedor atende; Nacional para os de abrangência nacional.
+	column RegiaoAtendida
+		dataType: string
+		lineageTag: 40d648a4-b2ba-4409-b51a-76216162b760
+		summarizeBy: none
+		sourceColumn: RegiaoAtendida
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Linha de produtos: MERC (mercearia), BEB, FRIOS, LAT, LIMP, BAZAR, EMB, HORTI, PAD, BOV, AVES.
+	column Tipo
+		dataType: string
+		lineageTag: 7e3de374-6cbc-44ce-bbcb-f0f94ee34355
+		summarizeBy: none
+		sourceColumn: Tipo
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Cidade de origem do fornecedor.
+	column Cidade
+		dataType: string
+		lineageTag: d6f677fa-78c5-4790-ab83-3fda20f11f96
+		summarizeBy: none
+		sourceColumn: Cidade
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Estado de origem.
+	column UF
+		dataType: string
+		lineageTag: 42ca2ab4-6262-4c10-88d8-d565d15c4771
+		summarizeBy: none
+		sourceColumn: UF
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Latitude do fornecedor. Não resumir.
+	column Latitude
+		dataType: double
+		lineageTag: 41bb6598-db71-4d50-8357-48012cd6dbc7
+		summarizeBy: none
+		sourceColumn: Latitude
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// Longitude do fornecedor. Não resumir.
+	column Longitude
+		dataType: double
+		lineageTag: e8c3766a-a8ee-483d-8227-77074270c7a3
+		summarizeBy: none
+		sourceColumn: Longitude
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// Prazo médio de pagamento negociado, em dias.
+	column PrazoPagamento
+		dataType: int64
+		formatString: 0
+		lineageTag: 93c255db-c7e2-45bc-b75b-e76069747140
+		summarizeBy: none
+		sourceColumn: PrazoPagamento
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dFornecedor = m
+		mode: import
+		source =
+				let
+				  Origem = Csv.Document(File.Contents("C:\Users\macor\OneDrive\Documentos\Vale Verde\mercado_vale_verde\powerbi\dados\dFornecedor.csv"), [Delimiter = ";", Columns = 10, Encoding = 65001, QuoteStyle = QuoteStyle.None]),
+				  #"Cabeçalhos promovidos" = Table.PromoteHeaders(Origem, [PromoteAllScalars = true]),
+				  #"Tipo de coluna alterado" = Table.TransformColumnTypes(#"Cabeçalhos promovidos", {{"FornecedorID", Int64.Type}, {"Fornecedor", type text}, {"Abrangencia", type text}, {"RegiaoAtendida", type text}, {"Tipo", type text}, {"Cidade", type text}, {"UF", type text}, {"Latitude", type number}, {"Longitude", type number}, {"PrazoPagamento", Int64.Type}})
+				in
+				  #"Tipo de coluna alterado"
+
+	annotation PBI_ResultType = Table
+

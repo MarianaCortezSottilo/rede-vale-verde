@@ -1,0 +1,76 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}
+{% block titulo %}Painel geral{% endblock %}
+{% block conteudo %}
+<div class="topo">
+  <div>
+    <h1>Painel geral · {{ rotulo_mes(c) }}</h1>
+    <div class="sub">{{ un_rotulo }} · {{ x.lojas }} loja(s) com vendas no mês. Comparações com o mês anterior e com o mesmo mês do ano anterior (inclui efeito de lojas novas).</div>
+  </div>
+  <form class="filtros" method="get">
+    <label>Mês</label>
+    <select name="mes" onchange="this.form.submit()">{% for x in todas_comps|reverse %}<option value="{{ x }}" {{ 'selected' if x == c }}>{{ rotulo_mes(x) }}</option>{% endfor %}</select>
+  </form>
+</div>
+
+<div class="grade g4">
+  {{ m.kpi('Faturamento', k.receita.valor|mil, m.delta(k.receita.vs_mes, rot='vs mês ant.') ~ ' ' ~ m.delta(k.receita.vs_ano, rot='vs ano ant.')) }}
+  {{ m.kpi('Ticket médio', k.ticket_medio.valor|brl, m.delta(k.ticket_medio.vs_mes, rot='vs mês ant.') ~ ' ' ~ m.delta(k.ticket_medio.vs_ano, rot='vs ano ant.')) }}
+  {{ m.kpi('Cupons emitidos', k.cupons.valor|num, m.delta(k.cupons.vs_mes, rot='vs mês ant.') ~ ' ' ~ m.delta(k.cupons.vs_ano, rot='vs ano ant.')) }}
+  {{ m.kpi('Margem bruta', k.margem_bruta.valor|pct, m.delta(k.margem_bruta.vs_mes, pp=true, rot='vs mês ant.') ~ ' ' ~ m.delta(k.margem_bruta.vs_ano, pp=true, rot='vs ano ant.')) }}
+  {{ m.kpi('Lucro líquido', x.lucro|mil, 'Margem líquida ' ~ (x.margem_liq|pct(2)) ~ ' · EBITDA ' ~ (x.ebitda|mil)) }}
+  {{ m.kpi('Perdas e quebras', x.perdas|mil, (x.perdas / k.receita.valor)|pct(2) ~ ' do faturamento · ruptura estimada ' ~ (x.rupturas or 0)|mil) }}
+  {{ m.kpi('Custo de pessoal', x.folha|mil, (x.headcount or '–')|string ~ ' funcionários · turnover ' ~ (x.turnover|pct)) }}
+  {{ m.kpi('Estoque atual', x.valor_estoque|mil, '<a href="' ~ url_for('com.estoque', status='Abaixo do mínimo') ~ '">' ~ x.abaixo_min ~ ' itens abaixo do mínimo</a> · a pagar em 7 dias ' ~ (x.pagar_7d|mil)) }}
+</div>
+
+<div class="grade g2 mt">
+  <div class="cartao col2">
+    <h3>Faturamento mensal</h3>
+    <div class="nota">24 meses realizados e projeção dos próximos 3 meses (modelo de tendência + sazonalidade)</div>
+    <div class="grafico"><canvas id="gReceita"></canvas></div>
+  </div>
+  <div class="cartao">
+    <h3>Lucro líquido mensal</h3>
+    <div class="nota">Resultado da DRE gerencial; meses negativos em vermelho</div>
+    <div class="grafico"><canvas id="gLucro"></canvas></div>
+  </div>
+  <div class="cartao">
+    <h3>Faturamento por categoria · {{ rotulo_mes(c) }}</h3>
+    <div class="nota">Passe o mouse para ver a margem bruta de cada categoria</div>
+    <div class="grafico"><canvas id="gCat"></canvas></div>
+  </div>
+  <div class="cartao">
+    <h3>Formas de pagamento · {{ rotulo_mes(c) }}</h3>
+    <div class="nota">Participação no faturamento do mês</div>
+    <div class="grafico baixo"><canvas id="gFp"></canvas></div>
+  </div>
+  <div class="cartao">
+    <h3>Atalhos</h3>
+    <div class="nota">Rotinas do dia a dia</div>
+    <p><a href="{{ url_for('rede.rede') }}">Comparativo e mapa da rede</a><br>
+       <a href="{{ url_for('rede.franquia') }}">Painel da franqueadora</a><br>
+       <a href="{{ url_for('com.pdv') }}">Registrar uma venda no PDV</a><br>
+       <a href="{{ url_for('com.sugestao') }}">Ver sugestão de compra</a><br>
+       <a href="{{ url_for('fin.contas') }}">Contas a pagar em aberto</a><br>
+       <a href="{{ url_for('rh.escala') }}">Escala do mês</a><br>
+       <a href="{{ url_for('fin.dre') }}">DRE dos últimos 12 meses</a><br>
+       <a href="{{ url_for('ext.projecoes') }}">Simulador de cenários</a></p>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const g = {{ g|tojson }};
+VV.grafico('gReceita', g.meses, [
+  {nome: 'Realizado', dados: g.receita, slot: 0},
+  {nome: 'Projeção', dados: g.projecao, slot: 0, fundo: '#9ec5f4', cor: '#9ec5f4'},
+], {fmt: 'brl', empilhado: true});
+VV.grafico('gLucro', g.meses_hist, [
+  {nome: 'Lucro líquido', dados: g.lucro, cores: g.lucro.map(v => v < 0 ? VV.status.critico : VV.cores[0])},
+], {fmt: 'brl', legenda: false});
+const gc = VV.grafico('gCat', g.cat_nomes, [{nome: 'Faturamento', dados: g.cat_receita, slot: 0}], {fmt: 'brl', horizontal: true});
+if (gc) { gc.options.plugins.tooltip.callbacks.afterLabel = ctx => ` Margem bruta: ${VV.fmtNum(1).format(g.cat_margem[ctx.dataIndex])}%`; gc.update(); }
+const tot = g.fp_receita.reduce((a, b) => a + b, 0);
+VV.grafico('gFp', g.fp_nomes, [{nome: '% do faturamento', dados: g.fp_receita.map(v => +(v / tot * 100).toFixed(1)), slot: 0}], {fmt: 'pct', horizontal: true});
+</script>
+{% endblock %}

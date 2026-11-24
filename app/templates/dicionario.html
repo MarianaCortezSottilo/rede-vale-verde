@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block titulo %}Dicionário de dados{% endblock %}
+{% block conteudo %}
+<div class="topo"><div><h1>Dicionário de dados</h1><div class="sub">{{ tabelas|length }} tabelas no banco SQLite</div></div></div>
+<div class="cartao"><p>{% for t in tabelas %}<a href="#{{ t.nome }}">{{ t.nome }}</a>{{ ' · ' if not loop.last }}{% endfor %}</p></div>
+<div class="grade g2 mt">
+{% for t in tabelas %}
+  <div class="cartao" id="{{ t.nome }}"><h3>{{ t.nome }}</h3><div class="nota">{{ t.n|num }} registros</div>
+    <table><tr><th>Coluna</th><th>Tipo</th><th>Chave</th></tr>
+    {% for c in t.cols %}<tr><td><code>{{ c.name }}</code></td><td>{{ c.type }}</td><td>{% if c.pk %}<span class="etq info">PK</span>{% endif %}{% if c.name in t.fks %} <span class="etq">→ {{ t.fks[c.name] }}</span>{% endif %}</td></tr>{% endfor %}</table></div>
+{% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+{# Macros reutilizáveis #}
+
+{% macro delta(v, pp=false, inverso=false, rot='') -%}
+  {%- if v is none -%}<span class="delta neutro">–</span>
+  {%- else -%}
+    {%- set bom = (v >= 0) != inverso -%}
+    <span class="delta {{ 'sobe' if bom else 'desce' }}">{{ '▲' if v >= 0 else '▼' }}
+    {%- if pp %} {{ '%+.1f'|format(v*100)|replace('.', ',') }} p.p.{% else %} {{ v|pct(1, true) }}{% endif %}</span>
+    {%- if rot %} <span class="det">{{ rot }}</span>{% endif -%}
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro kpi(rotulo, valor, det='') -%}
+<div class="cartao kpi">
+  <div class="rot">{{ rotulo }}</div>
+  <div class="val">{{ valor }}</div>
+  <div class="det">{{ det|safe }}</div>
+</div>
+{%- endmacro %}
+
+{% macro filtro_periodo(ci, cf, extra='') -%}
+<form class="filtros" method="get">
+  <label>De</label>
+  <select name="ini">{% for c in todas_comps %}<option value="{{ c }}" {{ 'selected' if c == ci }}>{{ rotulo_mes(c) }}</option>{% endfor %}</select>
+  <label>até</label>
+  <select name="fim">{% for c in todas_comps %}<option value="{{ c }}" {{ 'selected' if c == cf }}>{{ rotulo_mes(c) }}</option>{% endfor %}</select>
+  {{ extra|safe }}
+  <button type="submit">Aplicar</button>
+  {{ botao_excel() }}
+</form>
+{%- endmacro %}
+
+{% macro botao_excel() -%}
+{% set a = request.args.to_dict() %}{% set _ = a.update({'formato': 'xlsx'}) %}
+<a class="btn" href="{{ request.path }}?{{ a|urlencode }}" title="Baixar dados em Excel">⬇ Excel</a>
+{%- endmacro %}
+
+{% macro status_estoque(s) -%}
+<span class="etq {{ {'Sem estoque':'erro','Abaixo do mínimo':'alerta','Excesso':'info','Normal':'ok'}[s] }}">{{ {'Sem estoque':'✕ ','Abaixo do mínimo':'! ','Excesso':'↑ ','Normal':'✓ '}[s] }}{{ s }}</span>
+{%- endmacro %}
+
+{% macro status_titulo(s) -%}
+<span class="etq {{ {'PAGO':'ok','ABERTO':'alerta','RECEBIDO':'ok','RECEBIDO_PARCIAL':'alerta','CANCELADO':'erro','CONCLUIDA':'ok','CANCELADA':'erro'}.get(s,'') }}">{{ s|replace('_',' ')|capitalize }}</span>
+{%- endmacro %}

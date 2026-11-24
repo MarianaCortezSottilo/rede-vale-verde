@@ -1,0 +1,78 @@
+table fDespesas
+	lineageTag: 29632713-e44c-46c6-b13a-b7fc65e778d9
+
+	/// Competência (1º dia do mês).
+	column Data
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: f7af5c30-23b0-41cb-94ba-5c5218b3e67c
+		summarizeBy: none
+		sourceColumn: Data
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	/// Unidade que teve a despesa.
+	column UnidadeID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: b3d16131-41d9-427e-9c49-229ff26e12e0
+		summarizeBy: none
+		sourceColumn: UnidadeID
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Categoria da despesa (Aluguel, Energia elétrica, Taxas de cartão...).
+	column Categoria
+		dataType: string
+		lineageTag: 5e9465f4-43b9-4b1d-a74b-34a464232ee6
+		summarizeBy: none
+		sourceColumn: Categoria
+
+		annotation SummarizationSetBy = Automatic
+
+	/// FIXA (não varia com as vendas) ou VARIAVEL. Base do ponto de equilíbrio.
+	column Tipo
+		dataType: string
+		lineageTag: 5c2f3668-a5e9-4b40-be45-031cbff93f92
+		summarizeBy: none
+		sourceColumn: Tipo
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Linha da DRE onde a despesa entra: OCUPACAO, UTILIDADES, ADMINISTRATIVA, COMERCIAL, PESSOAL, LOGISTICA, FRANQUIA, DEPRECIACAO, FINANCEIRA.
+	column GrupoDRE
+		dataType: string
+		lineageTag: 772df39c-aa55-496b-bac4-ce85917d0567
+		summarizeBy: none
+		sourceColumn: GrupoDRE
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Valor da despesa, em R$.
+	column Valor
+		dataType: double
+		lineageTag: 8faec4b7-afde-4157-8054-fc6bf0c03375
+		summarizeBy: sum
+		sourceColumn: Valor
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition fDespesas = m
+		mode: import
+		source =
+				let
+				  Origem = Csv.Document(File.Contents("C:\Users\macor\OneDrive\Documentos\Vale Verde\mercado_vale_verde\powerbi\dados\fDespesas.csv"), [Delimiter = ";", Columns = 6, Encoding = 65001, QuoteStyle = QuoteStyle.None]),
+				  #"Cabeçalhos promovidos" = Table.PromoteHeaders(Origem, [PromoteAllScalars = true]),
+				  #"Tipo de coluna alterado" = Table.TransformColumnTypes(#"Cabeçalhos promovidos", {{"Data", type date}, {"UnidadeID", Int64.Type}, {"Categoria", type text}, {"Tipo", type text}, {"GrupoDRE", type text}, {"Valor", type number}})
+				in
+				  #"Tipo de coluna alterado"
+
+	annotation PBI_ResultType = Table
+

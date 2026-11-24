@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "SemanticModel",
+    "displayName": "Vale Verde Mercado"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "b4faa8bd-0f3d-42aa-af9d-a9eefa4efa9b"
+  }
+}

@@ -1,0 +1,116 @@
+table dCidade
+	lineageTag: 5550b4e3-c819-49cb-8d2e-618085a0dbdf
+
+	/// Identificador do município.
+	column CidadeID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 8b745b08-b136-4daa-bf9b-413fbdb6e553
+		summarizeBy: none
+		sourceColumn: CidadeID
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Nome do município.
+	column Cidade
+		dataType: string
+		lineageTag: 5edddded-8360-4a29-b755-8a56b06fa992
+		summarizeBy: none
+		sourceColumn: Cidade
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Sigla do estado.
+	column UF
+		dataType: string
+		lineageTag: 1bb8ea13-56da-49cf-9a24-474fdcb1e5fc
+		summarizeBy: none
+		sourceColumn: UF
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Região do Brasil.
+	column Regiao
+		dataType: string
+		lineageTag: 5928beae-c3b6-4e38-a41a-506c3058d9fd
+		summarizeBy: none
+		sourceColumn: Regiao
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Latitude do centro da cidade. Não resumir.
+	column Latitude
+		dataType: double
+		lineageTag: 38fe82a8-d949-4f9e-a8f2-1c2794647112
+		summarizeBy: none
+		sourceColumn: Latitude
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// Longitude do centro da cidade. Não resumir.
+	column Longitude
+		dataType: double
+		lineageTag: 64bc8d56-85f3-4edd-9310-5a8204d0bf4b
+		summarizeBy: none
+		sourceColumn: Longitude
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// População aproximada (habitantes).
+	column Populacao
+		dataType: int64
+		formatString: 0
+		lineageTag: 09a0c395-5394-435e-8a1d-894cd667e061
+		summarizeBy: sum
+		sourceColumn: Populacao
+
+		annotation SummarizationSetBy = User
+
+	/// Renda mensal per capita ilustrativa, em R$.
+	column RendaPerCapita
+		dataType: int64
+		formatString: 0
+		lineageTag: f19ee5d7-0c86-46fc-ab79-0118dee86727
+		summarizeBy: sum
+		sourceColumn: RendaPerCapita
+
+		annotation SummarizationSetBy = User
+
+	/// Quantidade estimada de supermercados concorrentes no município.
+	column Concorrentes
+		dataType: int64
+		formatString: 0
+		lineageTag: e34eab22-7207-48ad-90e2-efc19f90e066
+		summarizeBy: sum
+		sourceColumn: Concorrentes
+
+		annotation SummarizationSetBy = User
+
+	/// Com loja, CD/Sede (só unidade de apoio) ou Candidata (alvo de expansão).
+	column Situacao
+		dataType: string
+		lineageTag: 5be99f78-b43a-4657-9edd-5d224d1ddaba
+		summarizeBy: none
+		sourceColumn: Situacao
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dCidade = m
+		mode: import
+		source =
+				let
+				  Origem = Csv.Document(File.Contents("C:\Users\macor\OneDrive\Documentos\Vale Verde\mercado_vale_verde\powerbi\dados\dCidade.csv"), [Delimiter = ";", Columns = 10, Encoding = 65001, QuoteStyle = QuoteStyle.None]),
+				  #"Cabeçalhos promovidos" = Table.PromoteHeaders(Origem, [PromoteAllScalars = true]),
+				  #"Tipo de coluna alterado" = Table.TransformColumnTypes(#"Cabeçalhos promovidos", {{"CidadeID", Int64.Type}, {"Cidade", type text}, {"UF", type text}, {"Regiao", type text}, {"Latitude", type number}, {"Longitude", type number}, {"Populacao", Int64.Type}, {"RendaPerCapita", Int64.Type}, {"Concorrentes", Int64.Type}, {"Situacao", type text}})
+				in
+				  #"Tipo de coluna alterado"
+
+	annotation PBI_ResultType = Table
+

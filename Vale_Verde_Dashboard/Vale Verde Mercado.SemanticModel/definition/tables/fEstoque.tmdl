@@ -1,0 +1,110 @@
+table fEstoque
+	lineageTag: dbbddbe5-ee1f-4303-b194-6b13f22a5f30
+
+	column UnidadeID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 3b439586-8fc3-4790-9e42-21e518945208
+		summarizeBy: none
+		sourceColumn: UnidadeID
+
+		annotation SummarizationSetBy = Automatic
+
+	column ProdutoID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 792d6900-5586-4d21-907e-6379cdbb356d
+		summarizeBy: none
+		sourceColumn: ProdutoID
+
+		annotation SummarizationSetBy = Automatic
+
+	column Quantidade
+		dataType: double
+		lineageTag: 21bc9d60-11f0-4dc4-8de2-f8421c068b9b
+		summarizeBy: sum
+		sourceColumn: Quantidade
+
+		annotation SummarizationSetBy = Automatic
+
+	column CustoMedio
+		dataType: double
+		lineageTag: 06fb13ec-addd-4d95-9ee5-e34696b4da03
+		summarizeBy: none
+		sourceColumn: CustoMedio
+
+		annotation SummarizationSetBy = Automatic
+
+	column Valor
+		dataType: double
+		lineageTag: ed3fd703-ec07-45a0-873f-2f27957883d6
+		summarizeBy: sum
+		sourceColumn: Valor
+
+		annotation SummarizationSetBy = Automatic
+
+	column EstoqueMinimo
+		dataType: double
+		lineageTag: bf750b87-2033-4b4d-ae1b-164a7c22e91c
+		summarizeBy: none
+		sourceColumn: EstoqueMinimo
+
+		annotation SummarizationSetBy = Automatic
+
+	column EstoqueMaximo
+		dataType: double
+		lineageTag: 061e4555-2b3c-4868-9b2f-26d182fa158a
+		summarizeBy: none
+		sourceColumn: EstoqueMaximo
+
+		annotation SummarizationSetBy = Automatic
+
+	column SaidaDia
+		dataType: double
+		lineageTag: d48a6d1f-37b8-48c8-84c2-2fc5d5e4723b
+		summarizeBy: none
+		sourceColumn: SaidaDia
+
+		annotation SummarizationSetBy = Automatic
+
+	column CoberturaDias
+		dataType: double
+		lineageTag: 43147542-4a7f-4a29-baaa-55b5f13c261c
+		summarizeBy: none
+		sourceColumn: CoberturaDias
+
+		annotation SummarizationSetBy = Automatic
+
+	column Status
+		dataType: string
+		lineageTag: a76c9d5b-5f32-4e52-bfc9-b02ab3440381
+		summarizeBy: none
+		sourceColumn: Status
+
+		annotation SummarizationSetBy = Automatic
+
+	column DataPosicao
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: cbd65ade-cd92-4426-91bb-7562c303c076
+		summarizeBy: none
+		sourceColumn: DataPosicao
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	partition fEstoque = m
+		mode: import
+		source =
+				let
+				  Origem = Csv.Document(File.Contents("C:\Users\macor\OneDrive\Documentos\Vale Verde\mercado_vale_verde\powerbi\dados\fEstoque.csv"), [Delimiter = ";", Columns = 11, Encoding = 65001, QuoteStyle = QuoteStyle.None]),
+				  #"Cabeçalhos promovidos" = Table.PromoteHeaders(Origem, [PromoteAllScalars = true]),
+				  #"Tipo de coluna alterado" = Table.TransformColumnTypes(#"Cabeçalhos promovidos", {{"UnidadeID", Int64.Type}, {"ProdutoID", Int64.Type}, {"Quantidade", type number}, {"CustoMedio", type number}, {"Valor", type number}, {"EstoqueMinimo", type number}, {"EstoqueMaximo", type number}, {"SaidaDia", type number}, {"CoberturaDias", type number}, {"Status", type text}, {"DataPosicao", type date}}, "pt-BR")
+				in
+				  #"Tipo de coluna alterado"
+
+	annotation PBI_ResultType = Table
+

@@ -1,0 +1,12 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}
+{% block titulo %}Fornecedores{% endblock %}
+{% block conteudo %}
+<div class="topo"><div><h1>Fornecedores</h1><div class="sub">Todos fictícios. Nacionais abastecem os CDs; regionais entregam perecíveis direto nas lojas da sua região. <a href="{{ url_for('rede.mapa_logistica') }}">Ver no mapa ›</a></div></div><div class="filtros">{{ m.botao_excel() }}</div></div>
+<div class="cartao"><div class="tabela-wrap"><table>
+  <tr><th>Fornecedor</th><th>Abrangência</th><th>Tipo</th><th>Base</th><th>Dias de pedido</th><th class="n">Prazo pgto.</th><th class="n">Fator de custo</th><th class="n">Unidades atendidas</th><th class="n">Distância média</th><th class="n">Compras 12m</th></tr>
+  {% for f in t %}<tr><td><b>{{ f.nome_fantasia }}</b><br><span class="muted">{{ f.razao_social }} · {{ f.cnpj }}</span></td><td>{{ f.abrangencia|capitalize }}{% if f.regiao_atendida %} · {{ f.regiao_atendida }}{% endif %}</td><td>{{ f.tipo }}</td>
+    <td>{{ f.cidade }}/{{ f.uf }}</td><td>{{ f.dias_pedido|replace(',', ', ')|lower }}</td><td class="n">{{ f.prazo_pagamento_dias }} d</td><td class="n">{{ f.fator_custo|num(2) }}</td>
+    <td class="n">{{ f.unidades_atendidas }}</td><td class="n">{{ f.km_medio|num }} km</td><td class="n">{{ f.compras_12m|mil }}</td></tr>{% endfor %}
+</table></div>
+<p class="mt"><a class="btn" href="{{ url_for('com.novo_pedido') }}">+ Novo pedido de compra</a></p></div>
+{% endblock %}

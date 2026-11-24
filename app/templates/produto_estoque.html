@@ -1,0 +1,33 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}
+{% block titulo %}{{ p.descricao }}{% endblock %}
+{% block conteudo %}
+<div class="topo"><div><h1>{{ p.descricao }}</h1>
+  <div class="sub"><b>{{ p.unidade_cod }} · {{ p.unidade_nome }}</b> · SKU {{ p.sku }} · EAN {{ p.ean or '–' }} · {{ p.categoria }} · fornecedor {{ p.fornecedor }} · validade {{ p.validade_dias or '–' }} dias{% if p.sazonalidade %} · sazonalidade {{ p.sazonalidade|lower }}{% endif %}</div></div>
+  <div class="filtros">{{ m.botao_excel() }}<a class="btn" href="{{ url_for('com.estoque') }}">‹ Estoque</a><a class="btn" href="{{ url_for('com.movimentar', unidade_id=uid) }}">Lançar movimentação</a></div></div>
+<div class="grade g6">
+  {{ m.kpi('Estoque atual', p.quantidade|num(3 if p.unidade == 'KG' else 0) ~ ' ' ~ p.unidade|lower) }}
+  {{ m.kpi('Mínimo / máximo', p.estoque_minimo|num(1) ~ ' / ' ~ p.estoque_maximo|num(1)) }}
+  {{ m.kpi('Custo médio', p.custo_medio|brl) }}
+  {{ m.kpi('Preço de venda (loja)', (p.preco_atual * (p.fator_preco or 1))|brl if p.preco_atual else 'uso interno', 'canal: ' ~ ('via CD' if p.canal == 'CD' else 'fornecedor regional')) }}
+  {{ m.kpi('Margem sobre custo médio', (1 - p.custo_medio / (p.preco_atual * (p.fator_preco or 1)))|pct if p.preco_atual else '–') }}
+  {{ m.kpi('Movimentos', n|num) }}
+</div>
+<div class="grade g2 mt">
+  <div class="cartao col2"><h3>Saldo diário de estoque</h3><div class="nota">Quedas = vendas, perdas e consumo; saltos = recebimentos de compra</div><div class="grafico"><canvas id="gSaldo"></canvas></div></div>
+  <div class="cartao"><h3>Quantidade vendida por mês</h3><div class="grafico baixo"><canvas id="gQtd"></canvas></div></div>
+  <div class="cartao"><h3>Custo e preço por mês</h3><div class="grafico baixo"><canvas id="gPreco"></canvas></div></div>
+</div>
+<div class="cartao mt"><h3>Este produto nas outras unidades</h3><p>{% for o in outras %}<a href="{{ url_for('com.produto_estoque', uid=o.id, pid=p.id) }}" class="{{ 'etq ok' if o.id == uid else '' }}">{{ o.codigo }}: {{ o.quantidade|num(1) }}</a>{{ ' · ' if not loop.last }}{% endfor %}</p></div>
+<div class="cartao mt"><h3>Kardex (últimos 150 lançamentos)</h3>
+  <div class="rolagem"><table>
+    <tr><th>Data</th><th>Tipo</th><th>Motivo</th><th>Ref.</th><th class="n">Quantidade</th><th class="n">Custo unit.</th><th class="n">Saldo</th></tr>
+    {% for r in mov %}<tr><td>{{ r.data|data_br }}</td><td>{{ r.tipo|replace('_',' ')|capitalize }}</td><td>{{ r.motivo or '' }}</td><td>{% if r.referencia and r.referencia[:2] == 'PC' %}<a href="{{ url_for('com.pedido', pid=r.referencia[3:]|int) }}">{{ r.referencia }}</a>{% elif r.referencia %}<a href="{{ url_for('com.transferencia', tid=r.referencia[3:]|int) }}">{{ r.referencia }}</a>{% endif %}</td>
+      <td class="n {{ 'neg' if r.quantidade < 0 }}">{{ r.quantidade|num(3) }}</td><td class="n">{{ r.custo_unitario|brl }}</td><td class="n">{{ r.saldo|num(3) }}</td></tr>{% endfor %}
+  </table></div></div>
+{% endblock %}
+{% block scripts %}<script>
+const g = {{ g|tojson }};
+VV.grafico('gSaldo', g.dias, [{nome: 'Saldo', dados: g.saldo, slot: 0}], {tipo: 'line', fmt: 'dec', legenda: false});
+VV.grafico('gQtd', g.meses, [{nome: 'Quantidade', dados: g.qtd, slot: 0}], {fmt: 'num', legenda: false});
+VV.grafico('gPreco', g.pmeses, [{nome: 'Custo', dados: g.custo, slot: 1}, {nome: 'Preço', dados: g.preco, slot: 0}], {tipo: 'line', fmt: 'brl', min: 0});
+</script>{% endblock %}

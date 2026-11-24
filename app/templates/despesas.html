@@ -1,0 +1,38 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}
+{% block titulo %}Despesas{% endblock %}
+{% block conteudo %}
+<div class="topo"><div><h1>Despesas fixas e variáveis</h1><div class="sub">Despesas operacionais (a folha de pagamento fica no módulo de RH)</div></div>
+  {{ m.filtro_periodo(ci, cf) }}</div>
+<div class="grade g4">
+  {{ m.kpi('Total no período', total|mil) }}
+  {{ m.kpi('Fixas', fixas|mil, (fixas/total)|pct ~ ' do total') }}
+  {{ m.kpi('Variáveis', (total-fixas)|mil, ((total-fixas)/total)|pct ~ ' do total') }}
+  {{ m.kpi('Lançamentos', n|num, un_rotulo) }}
+</div>
+<div class="grade g2 mt">
+  <div class="cartao col2"><h3>Fixas × variáveis por mês (sem depreciação)</h3><div class="grafico baixo"><canvas id="gDesp"></canvas></div></div>
+  <div class="cartao"><h3>Por categoria</h3><div class="rolagem" style="max-height:380px"><table><tr><th>Categoria</th><th>Tipo</th><th class="n">Valor</th><th class="n">%</th></tr>
+    {% for r in por_cat %}<tr><td>{{ r.categoria }}</td><td><span class="etq {{ 'info' if r.tipo=='FIXA' else 'alerta' }}">{{ r.tipo|capitalize }}</span></td><td class="n">{{ r.valor|brl }}</td><td class="n">{{ (r.valor/total)|pct }}</td></tr>{% endfor %}</table></div></div>
+  <div class="cartao"><h3>Lançar nova despesa</h3>
+    <form method="post" class="form-grade">
+      <div class="campo"><label>Unidade</label><select name="unidade_id" required>{% for u in unidades_form %}<option value="{{ u.id }}" {{ 'selected' if u.id == uid }}>{{ u.codigo }} · {{ u.nome }}</option>{% endfor %}</select></div>
+      <div class="campo"><label>Competência</label><input type="month" name="competencia" value="{{ comp_padrao }}" required></div>
+      <div class="campo"><label>Categoria</label><select name="categoria_id">{% for c in cats %}<option value="{{ c.id }}">{{ c.nome }} ({{ c.tipo|lower }})</option>{% endfor %}</select></div>
+      <div class="campo"><label>Descrição</label><input type="text" name="descricao" required></div>
+      <div class="campo"><label>Favorecido</label><input type="text" name="favorecido"></div>
+      <div class="campo"><label>Departamento</label><select name="departamento_id"><option value="">—</option>{% for d in deps %}<option value="{{ d.id }}">{{ d.nome }}</option>{% endfor %}</select></div>
+      <div class="campo"><label>Valor (R$)</label><input type="text" name="valor" required></div>
+      <div class="campo"><label>Vencimento</label><input type="date" name="vencimento" required></div>
+      <div class="campo"><label>&nbsp;</label><button class="btn-primario">Lançar</button></div>
+    </form></div>
+</div>
+<div class="cartao mt"><h3>Lançamentos</h3><div class="rolagem"><table>
+  <tr><th>Unidade</th><th>Competência</th><th>Categoria</th><th>Descrição</th><th>Favorecido</th><th>Departamento</th><th class="n">Valor</th><th>Vencimento</th><th>Status</th></tr>
+  {% for r in t %}<tr><td>{{ r.unidade }}</td><td>{{ rotulo_mes(r.competencia) }}</td><td>{{ r.categoria }}</td><td>{{ r.descricao }}</td><td>{{ r.favorecido or '' }}</td><td>{{ r.departamento or '' }}</td>
+    <td class="n">{{ r.valor|brl }}</td><td>{{ r.data_vencimento|data_br }}</td><td>{{ m.status_titulo(r.status) }}</td></tr>{% endfor %}
+</table></div></div>
+{% endblock %}
+{% block scripts %}<script>
+const g = {{ g|tojson }};
+VV.grafico('gDesp', g.meses, [{nome: 'Fixas', dados: g.fixa, slot: 0, stack: 's'}, {nome: 'Variáveis', dados: g.variavel, slot: 1, stack: 's'}], {fmt: 'brl', empilhado: true});
+</script>{% endblock %}

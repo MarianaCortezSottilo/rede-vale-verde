@@ -1,0 +1,29 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}
+{% block titulo %}Escala {{ comp }}{% endblock %}
+{% block conteudo %}
+<div class="topo"><div><h1>Escala de trabalho · {{ comp[5:] }}/{{ comp[:4] }}</h1>
+  <div class="sub">{% for u in unidades_form if u.id == uid %}<b>{{ u.codigo }} · {{ u.nome }}</b> · {% endfor %}lojas: 6×1 com domingos alternados (seg–sáb 7h–22h, dom 8h–13h); CDs: dois turnos seg–sex; sede: comercial.</div></div>
+  <div class="filtros">
+    <a class="btn" href="?mes={{ anterior }}&departamento={{ dep }}&unidade_id={{ uid }}">‹</a>
+    <form class="filtros"><select name="unidade_id">{% for u in unidades_form %}<option value="{{ u.id }}" {{ 'selected' if u.id == uid }}>{{ u.codigo }} · {{ u.nome }}</option>{% endfor %}</select><input type="month" name="mes" value="{{ comp }}">
+      <select name="departamento"><option value="">Todos os departamentos</option>{% for d in deps %}<option {{ 'selected' if d==dep }}>{{ d }}</option>{% endfor %}</select><button>Ver</button></form>
+    <a class="btn" href="?mes={{ proximo }}&departamento={{ dep }}&unidade_id={{ uid }}">›</a>{{ m.botao_excel() }}
+    <form method="post"><input type="hidden" name="mes" value="{{ comp }}"><input type="hidden" name="unidade_id" value="{{ uid }}"><button title="Cria a escala padrão para quem ainda não tem escala neste mês">Gerar escala do mês</button></form>
+  </div></div>
+<div class="cartao">
+  <div class="legenda">
+    <span><i class="esc-M"></i>M manhã (loja 07:00–15:20 · CD 05:00–13:48)</span><span><i class="esc-T"></i>T tarde (loja 13:40–22:00 · CD 14:00–22:48)</span><span><i class="esc-D"></i>D domingo/feriado 08:00–13:00</span>
+    <span><i class="esc-C"></i>C comercial 08:00–17:48</span><span>F folga</span><span><i class="esc-Fé"></i>Fé férias</span><span><i class="esc-At"></i>At atestado / Fa falta</span></div>
+  {% if not grade %}<p class="muted">Não há escala para este mês. Use "Gerar escala do mês".</p>{% else %}
+  <div class="tabela-wrap mt"><table class="escala">
+    <tr><th class="nome">Funcionário</th>{% for d in dias %}<th class="{{ 'fds' if d.weekday() >= 5 }}">{{ d.day }}<br>{{ 'STQQSSD'[d.weekday()] }}</th>{% endfor %}<th>Dias</th></tr>
+    {% set ns = namespace(dep='') %}
+    {% for f in grade %}
+      {% if f.dep != ns.dep %}{% set ns.dep = f.dep %}<tr><td class="nome" colspan="{{ dias|length + 2 }}" style="background:#eef3ef;font-weight:600">{{ f.dep }}</td></tr>{% endif %}
+      <tr><td class="nome"><a href="{{ url_for('rh.funcionario', fid=f.id) }}">{{ f.nome }}</a> <span class="muted">· {{ f.cargo }}</span></td>
+        {% for cod, tp in f.cel %}<td class="esc-{{ cod }}" title="{{ tp or 'sem escala' }}">{{ cod }}</td>{% endfor %}<td>{{ f.trab }}</td></tr>
+    {% endfor %}
+    <tr><td class="nome"><b>Operadores de caixa escalados</b></td>{% for c in cobertura %}<td style="font-weight:600;{{ 'color:#d03b3b' if c < 6 and c > 0 }}">{{ c or '' }}</td>{% endfor %}<td></td></tr>
+  </table></div>{% endif %}
+</div>
+{% endblock %}

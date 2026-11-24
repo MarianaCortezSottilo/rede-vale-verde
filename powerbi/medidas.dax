@@ -1,0 +1,166 @@
+// =====================================================================
+//  Rede Vale Verde — medidas DAX
+//  Crie uma tabela vazia "_Medidas" (Página Inicial > Inserir dados > OK) e cole cada medida
+//  em "Nova medida". O nome vem antes do "=". Pastas sugeridas entre [colchetes] nos comentários.
+//  Pré-requisitos: relações do ROTEIRO.md e dCalendario marcada como tabela de datas.
+// =====================================================================
+
+// ---------- [01 Vendas] ----------
+Faturamento = SUM ( fCupons[Receita] )
+Cupons = SUM ( fCupons[Cupons] )
+Ticket Médio = DIVIDE ( [Faturamento], [Cupons] )
+Itens por Cupom = DIVIDE ( SUM ( fCupons[Itens] ), [Cupons] )
+CMV = SUM ( fCupons[CMV] )
+Lucro Bruto = [Faturamento] - [CMV]
+Margem Bruta % = DIVIDE ( [Lucro Bruto], [Faturamento] )
+% Cupons Fidelidade = DIVIDE ( SUM ( fCupons[CuponsFidelidade] ), [Cupons] )
+
+// por produto/categoria (use estas quando o visual tiver dProduto)
+Faturamento Produto = SUM ( fVendas[Receita] )
+Quantidade Vendida = SUM ( fVendas[Quantidade] )
+Margem Produto % = DIVIDE ( SUM ( fVendas[Receita] ) - SUM ( fVendas[CMV] ), SUM ( fVendas[Receita] ) )
+% do Faturamento Produto =
+    DIVIDE ( [Faturamento Produto], CALCULATE ( [Faturamento Produto], ALLSELECTED ( dProduto ) ) )
+
+// ---------- [02 Tempo] ----------
+Faturamento Ano Anterior = CALCULATE ( [Faturamento], SAMEPERIODLASTYEAR ( dCalendario[Data] ) )
+Crescimento vs AA % = DIVIDE ( [Faturamento] - [Faturamento Ano Anterior], [Faturamento Ano Anterior] )
+Faturamento Mês Anterior = CALCULATE ( [Faturamento], DATEADD ( dCalendario[Data], -1, MONTH ) )
+Faturamento 12m =
+    CALCULATE ( [Faturamento], DATESINPERIOD ( dCalendario[Data], MAX ( dCalendario[Data] ), -12, MONTH ) )
+Faturamento Acumulado Ano = TOTALYTD ( [Faturamento], dCalendario[Data] )
+
+// Same-store sales: só lojas abertas há 12+ meses no início do período analisado
+Crescimento Mesmas Lojas % =
+VAR inicio = MIN ( dCalendario[Data] )
+VAR lojas =
+    CALCULATETABLE (
+        VALUES ( dUnidade[UnidadeID] ),
+        dUnidade[Tipo] = "LOJA",
+        dUnidade[Inauguracao] <= EDATE ( inicio, -12 )
+    )
+VAR atual = CALCULATE ( [Faturamento], lojas )
+VAR anterior = CALCULATE ( [Faturamento], lojas, SAMEPERIODLASTYEAR ( dCalendario[Data] ) )
+RETURN DIVIDE ( atual - anterior, anterior )
+
+Lojas com Venda = CALCULATE ( DISTINCTCOUNT ( fCupons[UnidadeID] ), fCupons[Cupons] > 0 )
+Faturamento por m² Ano =
+VAR area =
+    SUMX ( FILTER ( VALUES ( dUnidade[UnidadeID] ), [Faturamento] > 0 ), CALCULATE ( MAX ( dUnidade[AreaM2] ) ) )
+VAR dias = DATEDIFF ( MIN ( fCupons[Data] ), MAX ( fCupons[Data] ), DAY ) + 1
+RETURN DIVIDE ( [Faturamento], area ) * DIVIDE ( 365, dias )
+
+// ---------- [03 Operação] ----------
+Perdas = CALCULATE ( SUM ( fPerdas[Valor] ), fPerdas[Tipo] IN { "PERDA", "AJUSTE_INVENTARIO" } )
+Perdas % Faturamento = DIVIDE ( [Perdas], [Faturamento] )
+Consumo Interno = CALCULATE ( SUM ( fPerdas[Valor] ), fPerdas[Tipo] = "CONSUMO_INTERNO" )
+Venda Perdida por Ruptura = SUM ( fRupturas[VendaPerdida] )
+Custo de Pessoal = SUM ( fFolha[CustoTotal] )
+Pessoal % Faturamento = DIVIDE ( [Custo de Pessoal], [Faturamento] )
+Funcionários (média) = AVERAGEX ( VALUES ( dCalendario[AnoMes] ), CALCULATE ( SUM ( fFolha[Funcionarios] ) ) )
+
+// ---------- [04 Logística] ----------
+Valor Transferido = SUM ( fTransferencias[ValorTransferencia] )
+Frete = SUM ( fTransferencias[Frete] )
+Frete % Transferido = DIVIDE ( [Frete], [Valor Transferido] )
+Frete % Faturamento = DIVIDE ( [Frete], [Faturamento] )
+Viagens = SUM ( fTransferencias[Viagens] )
+Custo por Viagem = DIVIDE ( [Frete], [Viagens] )
+Lead Time Médio (dias) = AVERAGE ( fTransferencias[LeadTimeDias] )
+Margem de Distribuição CD = SUM ( fTransferencias[ValorTransferencia] ) - SUM ( fTransferencias[CustoCD] )
+// Visão do CD (fTransferencias[CDID] -> dUnidade[UnidadeID] é uma relação INATIVA)
+Frete (visão CD) =
+    CALCULATE ( [Frete], USERELATIONSHIP ( fTransferencias[CDID], dUnidade[UnidadeID] ) )
+Valor Transferido (visão CD) =
+    CALCULATE ( [Valor Transferido], USERELATIONSHIP ( fTransferencias[CDID], dUnidade[UnidadeID] ) )
+
+// ---------- [05 Financeiro] ----------
+// fDRE está em formato longo (uma linha por conta). Em matriz: Linhas = fDRE[Linha] (ordenar por Ordem),
+// Colunas = dCalendario[MesAno], Valores = [DRE Valor]. Desligue o total de linhas (subtotais já vêm prontos).
+DRE Valor = SUM ( fDRE[Valor] )
+Base DRE =
+    CALCULATE ( [DRE Valor], fDRE[Chave] IN { "receita_bruta", "receitas_franquia", "margem_distribuicao" } )
+EBITDA = CALCULATE ( [DRE Valor], fDRE[Chave] = "ebitda" )
+LAIR = CALCULATE ( [DRE Valor], fDRE[Chave] = "lair" )
+Lucro Líquido = CALCULATE ( [DRE Valor], fDRE[Chave] = "lucro_liquido" )
+Margem EBITDA % = DIVIDE ( [EBITDA], [Base DRE] )
+Margem LAIR % = DIVIDE ( [LAIR], [Base DRE] )
+Margem Líquida % = DIVIDE ( [Lucro Líquido], [Base DRE] )
+DRE % Vertical = DIVIDE ( [DRE Valor], CALCULATE ( [Base DRE], ALL ( fDRE[Linha], fDRE[Ordem], fDRE[Chave], fDRE[Nivel] ) ) )
+
+Royalties = CALCULATE ( SUM ( fReceitasFranquia[Valor] ), fReceitasFranquia[Tipo] = "ROYALTIES" )
+Fundo de Marketing = CALCULATE ( SUM ( fReceitasFranquia[Valor] ), fReceitasFranquia[Tipo] = "FUNDO_MARKETING" )
+Despesas Fixas = CALCULATE ( SUM ( fDespesas[Valor] ), fDespesas[Tipo] = "FIXA", fDespesas[GrupoDRE] <> "DEPRECIACAO" )
+Despesas Variáveis = CALCULATE ( SUM ( fDespesas[Valor] ), fDespesas[Tipo] = "VARIAVEL" )
+
+// Ponto de equilíbrio (faturamento mensal médio necessário para LAIR = 0)
+Margem de Contribuição % =
+    DIVIDE ( [Lucro Bruto] - [Perdas] - [Consumo Interno] - [Despesas Variáveis], [Faturamento] )
+Ponto de Equilíbrio Mensal =
+VAR meses = DISTINCTCOUNT ( dCalendario[AnoMes] )
+VAR fixos = [Custo de Pessoal] + [Despesas Fixas]
+RETURN DIVIDE ( DIVIDE ( fixos, meses ), [Margem de Contribuição %] )
+
+// ---------- [06 Clientes] ----------
+Clientes = DISTINCTCOUNT ( dCliente[ClienteID] )
+Clientes Ativos 6m = CALCULATE ( [Clientes], dCliente[Compras6m] > 0 )
+Valor Clientes 6m = SUM ( dCliente[Valor6m] )
+% Valor da Faixa =
+    DIVIDE ( [Valor Clientes 6m], CALCULATE ( [Valor Clientes 6m], ALL ( dCliente[FaixaDistancia] ) ) )
+
+// ---------- [07 Textos dinâmicos] ----------
+Título Período =
+    "De " & FORMAT ( MIN ( dCalendario[Data] ), "mmm/yy" ) & " a " & FORMAT ( MAX ( dCalendario[Data] ), "mmm/yy" )
+Insight Crescimento =
+VAR c = [Crescimento Mesmas Lojas %]
+RETURN
+    IF ( ISBLANK ( c ), "Sem base de comparação para o período.",
+        "Nas lojas com mais de 1 ano, o faturamento " & IF ( c >= 0, "cresceu ", "caiu " ) & FORMAT ( ABS ( c ), "0.0%" )
+            & " frente ao mesmo período do ano anterior." )
+
+// ---------- [08 Visuais HTML] ----------
+// Use com o visual "HTML Content" (AppSource, gratuito). Em cada visual, arraste UMA medida abaixo.
+// Teste no "Publish to web" antes de divulgar: visuais personalizados precisam ser permitidos pelo administrador do tenant.
+
+HTML Card Faturamento =
+VAR v = [Faturamento]
+VAR c = [Crescimento vs AA %]
+VAR cor = IF ( c >= 0, "#0b7a0b", "#c0392b" )
+VAR seta = IF ( c >= 0, "▲", "▼" )
+RETURN
+    "<div style='font-family:Segoe UI,sans-serif;padding:14px 16px;border-radius:12px;background:#fff;border:1px solid #e6e6e1'>"
+        & "<div style='font-size:12px;color:#6b6a66;letter-spacing:.02em'>FATURAMENTO</div>"
+        & "<div style='font-size:28px;font-weight:700;color:#0b0b0b;margin:4px 0'>R$ " & FORMAT ( v / 1000000, "#,0.0" ) & " mi</div>"
+        & "<div style='font-size:12px;font-weight:600;color:" & cor & "'>" & seta & " " & FORMAT ( ABS ( c ), "0.0%" ) & " vs ano anterior</div>"
+        & "</div>"
+
+HTML Ranking Lojas =
+VAR maximo = MAXX ( ALLSELECTED ( dUnidade[Codigo] ), [Faturamento] )
+VAR linhas =
+    CONCATENATEX (
+        FILTER ( ALLSELECTED ( dUnidade[Codigo], dUnidade[Cidade], dUnidade[Modelo] ), [Faturamento] > 0 ),
+        VAR f = [Faturamento]
+        VAR largura = FORMAT ( DIVIDE ( f, maximo ) * 100, "0" )
+        VAR cor = IF ( dUnidade[Modelo] = "PROPRIA", "#2a78d6", "#eb6834" )
+        RETURN
+            "<div style='display:flex;align-items:center;gap:8px;margin:5px 0;font-size:12px'>"
+                & "<div style='width:120px;color:#333'>" & dUnidade[Codigo] & " " & dUnidade[Cidade] & "</div>"
+                & "<div style='flex:1;background:#f1f0ec;border-radius:4px;height:14px'>"
+                & "<div style='width:" & largura & "%;background:" & cor & ";height:14px;border-radius:4px'></div></div>"
+                & "<div style='width:70px;text-align:right;font-variant-numeric:tabular-nums'>R$ " & FORMAT ( f / 1000000, "#,0.0" ) & " mi</div></div>",
+        "",
+        [Faturamento], DESC
+    )
+RETURN
+    "<div style='font-family:Segoe UI,sans-serif'>"
+        & "<div style='font-size:12px;color:#6b6a66;margin-bottom:6px'>FATURAMENTO POR LOJA · <span style='color:#2a78d6'>■ própria</span> <span style='color:#eb6834'>■ franquia</span></div>"
+        & linhas & "</div>"
+
+HTML Semáforo Frete =
+VAR p = [Frete % Faturamento]
+VAR cor = SWITCH ( TRUE (), p > 0.02, "#c0392b", p > 0.01, "#b97800", "#0b7a0b" )
+VAR rotulo = SWITCH ( TRUE (), p > 0.02, "Crítico", p > 0.01, "Atenção", "Saudável" )
+RETURN
+    "<div style='font-family:Segoe UI,sans-serif;display:flex;align-items:center;gap:10px'>"
+        & "<span style='width:14px;height:14px;border-radius:50%;background:" & cor & ";display:inline-block'></span>"
+        & "<span style='font-size:13px'><b>" & rotulo & "</b> · frete = " & FORMAT ( p, "0.00%" ) & " do faturamento</span></div>"
