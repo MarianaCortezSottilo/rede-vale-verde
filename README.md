@@ -8,6 +8,7 @@ da rede e um relatório Power BI de 7 páginas responde às perguntas de vendas,
 3 distribution centers and 10 stores in 9 Brazilian states), a Flask web app works as the chain's ERP, and a
 7-page Power BI report answers questions on sales, logistics, P&L, cash, customers and people. All data is fictional.
 
+**Painel interativo / Live dashboard:** [abrir no Power BI](https://app.powerbi.com/view?r=eyJrIjoiN2RlODJjZDEtODhkMS00ODBkLWI1NjEtNjA2YzFhZGEzNmQ5IiwidCI6IjkxZGY2MzNlLTliNmEtNGRmOS1iZjg4LTc0YTNhNjVjODk5NSJ9)  
 **Portfólio / Portfolio:** https://marianacortezsottilo.github.io
 
 ![Desempenho da rede](docs/img/01-desempenho.png)
